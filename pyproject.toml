@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conftune-fc"
+version = "1.0.0"
+description = "Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+    { name = "James Turansky", email = "turajb@gmail.com" }
+]
+keywords = [
+    "tuner",
+    "performance",
+    "fedora",
+    "rocky-linux",
+    "centos",
+    "rhel",
+    "sysctl",
+    "systemd",
+    "dnf",
+    "zram",
+    "virtualmin",
+    "docker",
+    "podman",
+    "kvm",
+    "pyqt6"
+]
+dependencies = [
+    "PyQt6>=6.5.0",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PyQt6>=6.5.0",
+]
+
+[project.scripts]
+conftune = "main:main"
+conftune-fc = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["conftune*"]

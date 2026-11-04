@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="fedoraBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3584e4"/>
+      <stop offset="100%" stop-color="#1c71d8"/>
+    </linearGradient>
+    <linearGradient id="speedGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3584e4"/>
+      <stop offset="50%" stop-color="#57e389"/>
+      <stop offset="100%" stop-color="#f6d32d"/>
+    </linearGradient>
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#242424"/>
+      <stop offset="100%" stop-color="#181818"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Hexagonal Shield -->
+  <path d="M 64 8 C 92 8 118 18 118 42 C 118 84 86 116 64 122 C 42 116 10 84 10 42 C 10 18 36 8 64 8 Z" 
+        fill="url(#badgeGrad)" stroke="#3584e4" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Outer Gauge Arc -->
+  <path d="M 28 84 A 42 42 0 1 1 100 84" fill="none" stroke="#333f48" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 28 84 A 42 42 0 1 1 92 48" fill="none" stroke="url(#speedGrad)" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Gauge Tick Marks -->
+  <line x1="32" y1="80" x2="38" y2="76" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="28" y1="60" x2="35" y2="60" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="38" y1="42" x2="43" y2="47" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="64" y1="28" x2="64" y2="36" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="90" y1="42" x2="85" y2="47" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="100" y1="60" x2="93" y2="60" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="96" y1="80" x2="90" y2="76" stroke="#c0bfbc" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Center Hub -->
+  <circle cx="64" cy="72" r="12" fill="#1e1e1e" stroke="#3584e4" stroke-width="3"/>
+  <circle cx="64" cy="72" r="5" fill="#f6d32d"/>
+
+  <!-- High Performance Needle (pointing to high performance ~2 o'clock) -->
+  <polygon points="61,72 67,72 86,40 64,68" fill="#e01b24"/>
+  <line x1="64" y1="72" x2="88" y2="38" stroke="#ff7800" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Lightning / Turbo Bolt Accent at Bottom -->
+  <path d="M 62 90 L 52 105 L 63 105 L 60 116 L 76 99 L 66 99 Z" fill="#f6d32d" stroke="#e5a50a" stroke-width="1.2"/>
+</svg>

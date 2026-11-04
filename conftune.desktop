@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=ConfTune FC
+GenericName=System Performance Tuner
+Comment=Setup, configuration & performance tuning for Fedora, Rocky Linux, and CentOS
+Exec=/usr/bin/conftune-fc
+Icon=conftune-fc
+Terminal=false
+Type=Application
+Categories=System;Settings;HardwareSettings;
+StartupNotify=true
+Keywords=performance;tune;tuner;fedora;rocky;centos;rhel;sysctl;dnf;zram;docker;podman;kvm;virtualmin;webmin;

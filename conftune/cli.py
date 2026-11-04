@@ -1,0 +1,203 @@
+"""
+Command-Line Interface for ConfTune FC.
+Provides comprehensive headless administration for Fedora Server, Rocky Linux, and CentOS.
+"""
+
+import argparse
+import json
+import os
+import sys
+from typing import Optional
+
+from conftune import __version__
+from conftune.core.backup_manager import BackupManager
+from conftune.core.detector import SystemDetector
+from conftune.core.dnf_tuner import DNFTuner
+from conftune.core.logger import get_logger, setup_logger
+from conftune.core.profiles import PROFILES, get_profile, list_profiles
+from conftune.core.safety import SafetyEngine
+from conftune.core.server_tuner import ServerTuner
+from conftune.core.storage_tuner import StorageTuner
+from conftune.core.sysctl_tuner import SysctlTuner
+from conftune.core.systemd_tuner import SystemdTuner
+
+
+def run_cli(args: argparse.Namespace) -> None:
+    """Execute command-line workflows."""
+    setup_logger(verbose=getattr(args, "verbose", False))
+    logger = get_logger()
+
+    safety = SafetyEngine(dry_run=not args.apply if (getattr(args, "trim", False) or args.profile or args.tune_dnf or args.tune_containers or args.tune_virt or args.tune_virtualmin) else args.dry_run)
+    # If user explicitly specifies --dry-run or omits --apply on write operations
+    if args.dry_run:
+        safety.dry_run = True
+
+    backup_mgr = BackupManager()
+    detector = SystemDetector()
+    sysctl_tuner = SysctlTuner(safety=safety, backup_mgr=backup_mgr)
+    dnf_tuner = DNFTuner(safety=safety, backup_mgr=backup_mgr)
+    systemd_tuner = SystemdTuner(safety=safety, backup_mgr=backup_mgr)
+    storage_tuner = StorageTuner(safety=safety, backup_mgr=backup_mgr)
+    server_tuner = ServerTuner(safety=safety, backup_mgr=backup_mgr)
+
+    # 1. Status / Overview
+    if args.status:
+        print_system_status(detector, server_tuner, systemd_tuner)
+        return
+
+    # 2. List Profiles
+    if args.list_profiles:
+        print("\n==================== ConfTune FC - Tuning Presets ====================")
+        for p in list_profiles():
+            print(f"[{p['id']}] {p['icon']} {p['name']} ({p['category']})")
+            print(f"    Description: {p['description']}")
+            print(f"    Tuned: {p['tuned_profile']} | Journald: {p['journald_max']}")
+            print()
+        return
+
+    # 3. Apply Profile
+    if args.profile:
+        profile_key = args.profile.lower().replace("-", "_")
+        prof = get_profile(profile_key)
+        if not prof:
+            print(f"Error: Unknown profile '{args.profile}'. Use --list-profiles to view valid options.", file=sys.stderr)
+            sys.exit(1)
+
+        print(f"\n==> Applying Profile: {prof['name']} (dry-run: {safety.dry_run})")
+        # 1. Sysctl
+        ok, msg = sysctl_tuner.apply_parameters(prof["sysctl"], profile_name=prof["name"])
+        print(f"  [Sysctl] {msg}")
+
+        # 2. DNF
+        dnf_cfg = prof.get("dnf_settings", {})
+        ok, msg = dnf_tuner.apply_optimizations(
+            max_parallel_downloads=dnf_cfg.get("max_parallel_downloads", 10),
+            fastestmirror=dnf_cfg.get("fastestmirror", True),
+            defaultyes=dnf_cfg.get("defaultyes", True),
+            keepcache=dnf_cfg.get("keepcache", True),
+        )
+        print(f"  [DNF] {msg}")
+
+        # 3. Systemd Journald
+        ok, msg = systemd_tuner.configure_journald_limit(prof.get("journald_max", "300M"))
+        print(f"  [Journald] {msg}")
+
+        # 4. Tuned profile
+        if prof.get("tuned_profile"):
+            ok, msg = server_tuner.set_tuned_profile(prof["tuned_profile"])
+            print(f"  [Tuned] {msg}")
+
+        print(f"\nProfile application completed. {'(Simulation mode - no files modified)' if safety.dry_run else 'All changes applied safely.'}")
+        if safety.dry_run:
+            print("To commit these changes permanently to the system, re-run with: --apply")
+        return
+
+    # 4. DNF Acceleration
+    if args.tune_dnf:
+        print(f"\n==> Tuning DNF package manager (dry-run: {safety.dry_run})...")
+        ok, msg = dnf_tuner.apply_optimizations()
+        print(f"  {msg}")
+        return
+
+    # 5. Specialized: Containers (Podman / Docker)
+    if args.tune_containers:
+        print(f"\n==> Configuring Container Host stack (dry-run: {safety.dry_run})...")
+        ok, msg = server_tuner.optimize_containers_stack()
+        print(f"  {msg}")
+        # Apply container host sysctl
+        c_prof = get_profile("container_host")
+        if c_prof:
+            ok, msg = sysctl_tuner.apply_parameters(c_prof["sysctl"], profile_name=c_prof["name"])
+            print(f"  {msg}")
+        return
+
+    # 6. Specialized: Virtualization Host (KVM / QEMU / Libvirt)
+    if args.tune_virt:
+        print(f"\n==> Configuring Virtualization Host stack (dry-run: {safety.dry_run})...")
+        ok, msg = server_tuner.optimize_virtualization_host()
+        print(f"  {msg}")
+        v_prof = get_profile("virtualization_host")
+        if v_prof:
+            ok, msg = sysctl_tuner.apply_parameters(v_prof["sysctl"], profile_name=v_prof["name"])
+            print(f"  {msg}")
+        return
+
+    # 7. Specialized: Virtualmin & Webmin
+    if args.tune_virtualmin:
+        print(f"\n==> Configuring Virtualmin / Webmin stack (dry-run: {safety.dry_run})...")
+        ok, msg = server_tuner.optimize_virtualmin_stack()
+        print(f"  {msg}")
+        vm_prof = get_profile("virtualmin")
+        if vm_prof:
+            ok, msg = sysctl_tuner.apply_parameters(vm_prof["sysctl"], profile_name=vm_prof["name"])
+            print(f"  {msg}")
+        return
+
+    # 8. Storage: Trim
+    if args.trim:
+        print("\n==> Running filesystem TRIM across all SSD/NVMe drives...")
+        ok, msg = storage_tuner.run_fstrim_now()
+        print(msg)
+        return
+
+    # 9. Snapshots & Rollback
+    if args.snapshots:
+        snaps = backup_mgr.list_snapshots()
+        print(f"\n================ Configuration Snapshots ({len(snaps)}) ================")
+        if not snaps:
+            print("No snapshots recorded yet.")
+        for s in snaps:
+            print(f"ID: {s.get('id')} | Time: {s.get('timestamp')} | Profile: {s.get('profile')}")
+            print(f"    Tracked Files: {len(s.get('files', []))}")
+            for f in s.get("files", []):
+                print(f"      - {f.get('original_path')}")
+            print()
+        return
+
+    if args.rollback:
+        snap_id = args.rollback
+        print(f"\n==> Rolling back to snapshot: {snap_id} (dry-run: {safety.dry_run})...")
+        ok, msg = backup_mgr.rollback_snapshot(snap_id, dry_run=safety.dry_run)
+        print(msg)
+        return
+
+    # Default fallback: Print status
+    print_system_status(detector, server_tuner, systemd_tuner)
+
+
+def print_system_status(detector: SystemDetector, server_tuner: ServerTuner, systemd_tuner: SystemdTuner) -> None:
+    """Print clean terminal summary of host system configuration."""
+    os_info = detector.os_info
+    hw = detector.hardware_info
+    role = detector.role_info
+    stacks = detector.specialized_stacks
+    tuned = server_tuner.get_tuned_status()
+
+    print(f"\n╔══════════════════════════════════════════════════════════════════════════╗")
+    print(f"║                   ConfTune FC - System Performance Status                ║")
+    print(f"║                   Version {__version__:<10} (Fedora / RPM Edition)                 ║")
+    print(f"╚══════════════════════════════════════════════════════════════════════════╝\n")
+
+    print(f"  Operating System  : {os_info.get('pretty_name')} ({os_info.get('arch')})")
+    print(f"  Kernel Release    : {os_info.get('kernel')}")
+    print(f"  Role Detection    : {'Desktop Workstation (' + role.get('desktop_env', 'GUI') + ')' if role.get('is_desktop') else 'Headless Server / Cloud Node'}")
+    print(f"  Virtualization    : {hw.get('virtualization', 'none')}")
+    print(f"  CPU Hardware      : {hw.get('cpu_model')} ({hw.get('cpu_cores')} cores)")
+    print(f"  CPU Governor      : {hw.get('cpu_governor')}")
+    print(f"  Memory (RAM)      : {hw.get('ram_avail_gb')} GB avail / {hw.get('ram_total_gb')} GB total")
+    print(f"  ZRAM Swap         : {'Active (' + str(hw.get('zram_size_gb')) + ' GB)' if hw.get('has_zram') else 'None'}")
+    print(f"  Storage Devices   : {'NVMe present' if hw.get('has_nvme') else 'SATA SSD/HDD'} (Root FS: {hw.get('root_fs')})")
+    print(f"  Active Tuned Prof : {tuned.get('active_profile')}")
+    print(f"  SELinux Mode      : {server_tuner.get_selinux_status()}")
+    print(f"  Boot Time Summary : {systemd_tuner.get_boot_time_summary()}")
+
+    print("\n  --- Specialized Stack Detection ---")
+    vm = stacks.get("virtualmin", {})
+    print(f"  Virtualmin/Webmin : {'Detected (Installed)' if vm.get('detected') else 'Not detected'}")
+    c = stacks.get("containers", {})
+    print(f"  Container Engines : {'Podman ' if c.get('has_podman') else ''}{'Docker ' if c.get('has_docker') else ''}{'None' if not (c.get('has_podman') or c.get('has_docker')) else ''} (IP Forwarding: {c.get('ip_forwarding')})")
+    v = stacks.get("virtualization_host", {})
+    print(f"  Virtualization    : {'KVM Host (/dev/kvm ready)' if v.get('is_kvm_host') else 'No hardware KVM'} (Libvirt: {v.get('has_libvirt')})")
+
+    print("\n  Tip: Run 'conftune --list-profiles' or 'conftune --profile <name> --apply' to tune.")
+    print("       Run 'conftune --gui' to launch the graphical desktop interface.\n")

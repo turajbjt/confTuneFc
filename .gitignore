@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging & distribution
+dist/
+rpmbuild/
+*.rpm
+*.tar.gz
+*.egg-info/
+.eggs/
+
+# IDE / Editor artifacts
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs and test outputs
+/var/log/conftune/
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
