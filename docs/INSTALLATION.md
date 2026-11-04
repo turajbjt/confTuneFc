@@ -13,6 +13,10 @@ This guide provides instructions for installing, configuring, running, and unins
   - **AlmaLinux / Oracle Linux**: 8.x, 9.x, 10.x
 - **Python**: Version 3.9 or newer.
 - **GUI Dependency**: `python3-pyqt6` (required for graphical interface; headless CLI runs on the Python standard library with no extra packages needed).
+- **Optional Recommended Packages**:
+  - `tuned` (dynamic profile switcher)
+  - `smartmontools` (SMART drive and NVMe health inspection)
+  - `gamemode` (low-latency process governor for gaming workloads)
 
 ---
 

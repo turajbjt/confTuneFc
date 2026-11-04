@@ -91,6 +91,30 @@ python3 main.py
 
 ---
 
+## 🖥️ Graphical Interface (15 Specialized Views)
+
+ConfTune FC includes a GNOME 45+ Adwaita Dark interface organized into 15 specialized views:
+
+| View | Icon | Purpose |
+| :--- | :---: | :--- |
+| **Overview & Specs** | 📊 | Hardware topology, CPU governor, RAM/ZRAM, block devices, and stack readiness. |
+| **Tuning Profiles** | 🎯 | 1-click workload presets with live parameter diff preview and simulation mode. |
+| **Kernel & Sysctl** | ⚡ | Interactive runtime editor for VM, TCP, inotify, and filesystem limits. |
+| **DNF Accelerator** | 📦 | Multi-threaded parallel downloads (`max_parallel_downloads=10`) and fastest mirrors. |
+| **Boot & Systemd** | ⏱️ | Visual `systemd-analyze blame` bottlenecks, daemon management, and journal caps. |
+| **Storage & ZRAM** | 💾 | Background weekly SSD/NVMe TRIM timer, I/O schedulers, and ZRAM generator config. |
+| **Specialized Stacks** | 🌐 | Dedicated 1-click tuning for Virtualmin/Webmin, Docker/Podman, and KVM hypervisors. |
+| **Fedy Essentials** | 🚀 | 1-click RPM Fusion Free/Nonfree, GStreamer codecs, VA-API, and font antialiasing. |
+| **CPU & Power Policy** | ⚡ | EPP energy bias, CPU governors, Transparent Huge Pages (THP), and GameMode. |
+| **Process & OOM Defense** | 🛡️ | `systemd-oomd` memory pressure ceilings and `oom_score_adj` process immunity. |
+| **Autostart Manager** | 🚀 | Login autostart application manager, core dump storage caps, and ABRT controls. |
+| **Privacy & Telemetry** | 🚫 | 1-click opt-out from GNOME/Fedora usage statistics and automated bug transmission. |
+| **Server & Security** | 🏢 | Red Hat tuned-adm switcher, Firewalld zones, SELinux booleans, and SSH audit. |
+| **Snapshots & Rollback** | 🗄️ | Visual snapshot history, JSON manifest inspector, and instant 1-click rollback. |
+| **Audit Logs** | 📋 | Real-time color-coded audit trail of all tuning tasks, backups, and rollbacks. |
+
+---
+
 ## 💻 Headless Server & CLI Usage
 
 ConfTune FC works completely headless over SSH on remote Rocky Linux, CentOS, or Fedora servers.
@@ -108,6 +132,30 @@ python3 main.py --profile server
 # Apply Enterprise Server profile permanently:
 sudo python3 main.py --profile server --apply
 
+# Install RPM Fusion & complete multimedia codecs (Fedy style):
+sudo python3 main.py --fedy-codecs --apply
+
+# Set CPU scaling governor across all cores (QuickCPU style):
+sudo python3 main.py --governor performance --apply
+
+# Set CPU Energy Performance Preference (EPP):
+sudo python3 main.py --epp performance --apply
+
+# Set Transparent Huge Pages (THP) mode:
+sudo python3 main.py --thp madvise --apply
+
+# Protect mission-critical service from OOM Killer (Process Lasso style):
+sudo python3 main.py --protect-process postgres --oom-score -500 --apply
+
+# Tune systemd-oomd memory pressure limits:
+sudo python3 main.py --tune-oomd --apply
+
+# List all login autostart applications (Stacer style):
+python3 main.py --list-autostart
+
+# Opt out of all desktop telemetry and metrics (O&O ShutUp style):
+python3 main.py --disable-telemetry
+
 # Accelerate DNF package manager (multi-threaded downloads + fastest mirror):
 sudo python3 main.py --tune-dnf --apply
 
@@ -119,6 +167,9 @@ sudo python3 main.py --tune-virt --apply
 
 # Optimize Virtualmin & Webmin hosting server:
 sudo python3 main.py --tune-virtualmin --apply
+
+# Query SMART drive and NVMe health status:
+sudo python3 main.py --drive-health
 
 # Trigger SSD/NVMe TRIM discard:
 sudo python3 main.py --trim
