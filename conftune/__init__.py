@@ -3,5 +3,6 @@ ConfTune FC - Fedora, Rocky Linux & CentOS System Setup, Configuration & Perform
 """
 
 __version__ = "1.0.0"
-__author__ = "James Turansky"
+__author__ = "BuildDesignCreate.com"
+__copyright__ = "Copyright © BuildDesignCreate.com"
 __license__ = "GPL-3.0-or-later"

@@ -71,7 +71,7 @@ def update_pyproject_toml(new_version: str):
     print(f"  ✓ Updated pyproject.toml -> {new_version}")
 
 
-def update_spec_file(new_version: str, message: str, author: str = "James Turansky <turajb@gmail.com>"):
+def update_spec_file(new_version: str, message: str, author: str = "BuildDesignCreate.com"):
     path = os.path.join(ROOT_DIR, "packaging", "conftune-fc.spec")
     if not os.path.isfile(path):
         return

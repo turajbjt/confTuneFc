@@ -154,8 +154,8 @@ sudo dnf install dist/conftune-fc-*.noarch.rpm
 
 ---
 
-## 👥 Authors & License
+## ⚖️ License & Copyright
 
-- **Author**: James Turansky (`turajb@gmail.com`)
+- **Copyright**: © [BuildDesignCreate.com](https://builddesigncreate.com)
 - **License**: [GNU General Public License v3.0 or later (GPL-3.0-or-later)](LICENSE)
 - **Sister Application**: [ConfClean FC](https://github.com/turajbjt/confCleanFc)

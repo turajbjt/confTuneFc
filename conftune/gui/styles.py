@@ -21,7 +21,6 @@ QMainWindow, QDialog {
 QListWidget#nav_sidebar {
     background-color: #1e1e1e;
     border: none;
-    border-right: 1px solid #323232;
     padding-top: 8px;
     font-size: 14px;
     outline: none;

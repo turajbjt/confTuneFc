@@ -114,5 +114,5 @@ fi
 %{_datadir}/polkit-1/actions/io.github.conftune_fc.policy
 
 %changelog
-* Tue Nov 03 2026 James Turansky <turajb@gmail.com> - 1.0.0-1
+* Tue Nov 03 2026 BuildDesignCreate.com - 1.0.0-1
 - Initial release of ConfTune FC for Fedora 44+, Rocky Linux, and CentOS Stream.

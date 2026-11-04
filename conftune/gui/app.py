@@ -141,10 +141,16 @@ class MainWindow(QMainWindow):
         body_layout.setContentsMargins(0, 0, 0, 0)
         body_layout.setSpacing(0)
 
-        # Left Navigation Sidebar
+        # Left Navigation Sidebar Container
+        sidebar_container = QWidget()
+        sidebar_container.setFixedWidth(240)
+        sidebar_container.setStyleSheet("background-color: #1e1e1e; border-right: 1px solid #323232;")
+        sb_layout = QVBoxLayout(sidebar_container)
+        sb_layout.setContentsMargins(0, 0, 0, 0)
+        sb_layout.setSpacing(0)
+
         self.sidebar = QListWidget()
         self.sidebar.setObjectName("nav_sidebar")
-        self.sidebar.setFixedWidth(240)
         self.sidebar.setIconSize(QSize(20, 20))
 
         nav_items = [
@@ -166,7 +172,16 @@ class MainWindow(QMainWindow):
             self.sidebar.addItem(item)
 
         self.sidebar.currentRowChanged.connect(self._on_nav_changed)
-        body_layout.addWidget(self.sidebar)
+        sb_layout.addWidget(self.sidebar)
+
+        # Copyright Footer Link
+        lbl_copyright = QLabel('© <a href="https://builddesigncreate.com" style="color: #727b84; text-decoration: none;">BuildDesignCreate.com</a>')
+        lbl_copyright.setOpenExternalLinks(True)
+        lbl_copyright.setStyleSheet("color: #727b84; font-size: 11px; padding: 12px 14px; border-top: 1px solid #282828;")
+        lbl_copyright.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sb_layout.addWidget(lbl_copyright)
+
+        body_layout.addWidget(sidebar_container)
 
         # Stacked Views Widget
         self.stack = QStackedWidget()
