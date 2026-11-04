@@ -25,15 +25,25 @@ class BackupManager:
             self.base_dir = "/var/lib/conftune/backups"
         else:
             self.base_dir = os.path.expanduser("~/.local/share/conftune/backups")
-        os.makedirs(self.base_dir, exist_ok=True)
+        try:
+            os.makedirs(self.base_dir, exist_ok=True)
+        except Exception as e:
+            self.logger.warning(f"Could not initialize backup directory {self.base_dir}: {e}")
 
-    def create_snapshot(self, profile_name: str, target_paths: List[str], notes: str = "") -> Optional[str]:
+    def create_snapshot(
+        self, profile_name: str, target_paths: List[str], notes: str = "", dry_run: bool = False
+    ) -> Optional[str]:
         """
         Create a timestamped snapshot of targeted files before applying tuning.
         Returns the snapshot directory ID, or None if snapshot could not be created.
         """
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         snapshot_id = f"snap_{timestamp}_{profile_name.replace(' ', '_').lower()}"
+
+        if dry_run:
+            self.logger.info(f"[DRY RUN] Would create configuration snapshot {snapshot_id} for {len(target_paths)} targets.")
+            return snapshot_id
+
         snap_dir = os.path.join(self.base_dir, snapshot_id)
 
         try:

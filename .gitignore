@@ -6,6 +6,7 @@ __pycache__/
 # Packaging & distribution
 dist/
 rpmbuild/
+packaging/rpmbuild-runner
 *.rpm
 *.tar.gz
 *.egg-info/

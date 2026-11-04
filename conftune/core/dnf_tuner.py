@@ -69,6 +69,7 @@ class DNFTuner:
             profile_name="dnf_optimization",
             target_paths=[DNF_CONF_PATH],
             notes="DNF acceleration tweaks",
+            dry_run=self.safety.dry_run,
         )
 
         if self.safety.dry_run:

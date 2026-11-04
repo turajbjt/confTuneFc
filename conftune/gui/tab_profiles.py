@@ -220,39 +220,47 @@ class ProfilesTab(QWidget):
         self.btn_apply_dry.setEnabled(False)
 
         def task():
-            old_dry = self.sysctl_tuner.safety.dry_run
+            old_sysctl_dry = self.sysctl_tuner.safety.dry_run
+            old_dnf_dry = self.dnf_tuner.safety.dry_run
+            old_systemd_dry = self.systemd_tuner.safety.dry_run
+            old_server_dry = self.server_tuner.safety.dry_run
+
             self.sysctl_tuner.safety.dry_run = dry_run
             self.dnf_tuner.safety.dry_run = dry_run
             self.systemd_tuner.safety.dry_run = dry_run
             self.server_tuner.safety.dry_run = dry_run
 
-            results = []
-            # 1. Sysctl
-            ok_s, msg_s = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name=prof["name"])
-            results.append(msg_s)
+            try:
+                results = []
+                # 1. Sysctl
+                ok_s, msg_s = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name=prof["name"])
+                results.append(msg_s)
 
-            # 2. DNF
-            dnf_cfg = prof.get("dnf_settings", {})
-            ok_d, msg_d = self.dnf_tuner.apply_optimizations(
-                max_parallel_downloads=dnf_cfg.get("max_parallel_downloads", 10),
-                fastestmirror=dnf_cfg.get("fastestmirror", True),
-            )
-            results.append(msg_d)
+                # 2. DNF
+                dnf_cfg = prof.get("dnf_settings", {})
+                ok_d, msg_d = self.dnf_tuner.apply_optimizations(
+                    max_parallel_downloads=dnf_cfg.get("max_parallel_downloads", 10),
+                    fastestmirror=dnf_cfg.get("fastestmirror", True),
+                )
+                results.append(msg_d)
 
-            # 3. Journald
-            ok_j, msg_j = self.systemd_tuner.configure_journald_limit(prof.get("journald_max", "300M"))
-            results.append(msg_j)
+                # 3. Journald
+                ok_j, msg_j = self.systemd_tuner.configure_journald_limit(prof.get("journald_max", "300M"))
+                results.append(msg_j)
 
-            # 4. Tuned
-            if prof.get("tuned_profile"):
-                ok_t, msg_t = self.server_tuner.set_tuned_profile(prof["tuned_profile"])
-                results.append(msg_t)
+                # 4. Tuned
+                if prof.get("tuned_profile"):
+                    ok_t, msg_t = self.server_tuner.set_tuned_profile(prof["tuned_profile"])
+                    results.append(msg_t)
 
-            self.sysctl_tuner.safety.dry_run = old_dry
-            self.dnf_tuner.safety.dry_run = old_dry
-            self.systemd_tuner.safety.dry_run = old_dry
-            self.server_tuner.safety.dry_run = old_dry
-            return True, "\n".join(results)
+                return True, "\n".join(results)
+            except Exception as e:
+                return False, f"Error during profile execution: {e}"
+            finally:
+                self.sysctl_tuner.safety.dry_run = old_sysctl_dry
+                self.dnf_tuner.safety.dry_run = old_dnf_dry
+                self.systemd_tuner.safety.dry_run = old_systemd_dry
+                self.server_tuner.safety.dry_run = old_server_dry
 
         def on_done(success: bool, message: str, payload):
             self.progress.setVisible(False)
@@ -262,6 +270,9 @@ class ProfilesTab(QWidget):
             self.profile_applied.emit(self.selected_profile_id)
 
             title = "Simulation Results" if dry_run else "Profile Applied Successfully"
-            QMessageBox.information(self, title, message)
+            if success:
+                QMessageBox.information(self, title, message)
+            else:
+                QMessageBox.warning(self, "Tuning Alert", message)
 
-        run_async_task(task, on_done)
+        self._current_worker = run_async_task(task, on_done, parent=self)

@@ -63,6 +63,7 @@ class ProcessTuner:
             profile_name="oomd_tuning",
             target_paths=[OOMD_CONF_PATH],
             notes="Adjust systemd-oomd memory pressure thresholds",
+            dry_run=self.safety.dry_run,
         )
 
         content = (

@@ -70,15 +70,22 @@ class MainWindow(QMainWindow):
 
         # Assets and Icon
         self.app_icon_path = None
+        icon = QIcon.fromTheme("conftune-fc")
+        if not icon.isNull():
+            self.setWindowIcon(icon)
+
         icon_candidates = [
             os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "assets", "icon.svg"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "assets", "icons", "512x512", "conftune-fc.png"),
             "/usr/share/conftune-fc/assets/icon.svg",
             "/usr/share/icons/hicolor/scalable/apps/conftune-fc.svg",
+            "/usr/share/icons/hicolor/512x512/apps/conftune-fc.png",
         ]
         for icon_path in icon_candidates:
             if os.path.isfile(icon_path):
                 self.app_icon_path = icon_path
-                self.setWindowIcon(QIcon(icon_path))
+                if self.windowIcon().isNull():
+                    self.setWindowIcon(QIcon(icon_path))
                 break
 
         # Core Subsystems
@@ -314,6 +321,9 @@ class MainWindow(QMainWindow):
 def run_gui(ready_signal: bool = False) -> None:
     """Initialize QApplication and start Qt event loop."""
     app = QApplication.instance() or QApplication(sys.argv)
+    app.setDesktopFileName("conftune-fc")
+    app.setApplicationName("conftune-fc")
+    app.setOrganizationName("BuildDesignCreate")
     app.setStyleSheet(ADWAITA_DARK_STYLE)
 
     window = MainWindow()

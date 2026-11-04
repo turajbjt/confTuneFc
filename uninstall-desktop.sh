@@ -9,6 +9,10 @@ rm -f "${APPS_DIR}/conftune-fc.desktop"
 rm -f "${APPS_DIR}/conftune.desktop"
 rm -f "${ICONS_DIR}/conftune-fc.svg"
 
+for size in 16 24 32 48 64 128 256 512; do
+    rm -f "${HOME}/.local/share/icons/hicolor/${size}x${size}/apps/conftune-fc.png"
+done
+
 update-desktop-database "${APPS_DIR}" 2>/dev/null || true
 
 echo "ConfTune FC desktop shortcuts and icons uninstalled."

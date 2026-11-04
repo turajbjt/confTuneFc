@@ -130,6 +130,7 @@ class StorageTuner:
             profile_name="zram_config",
             target_paths=[ZRAM_CONF_PATH],
             notes="Configure zram-generator",
+            dry_run=self.safety.dry_run,
         )
 
         content = (

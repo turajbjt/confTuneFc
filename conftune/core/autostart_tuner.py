@@ -106,6 +106,7 @@ class AutostartTuner:
             profile_name="coredump_tuning",
             target_paths=[COREDUMP_CONF_PATH],
             notes="Cap coredump disk usage",
+            dry_run=self.safety.dry_run,
         )
 
         content = (

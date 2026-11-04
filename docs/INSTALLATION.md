@@ -84,12 +84,12 @@ To package ConfTune FC as a system-wide RPM package:
    sudo dnf install dist/conftune-fc-*.noarch.rpm
    ```
 
-This installs:
+The universal package is compatible across **Fedora 40+**, **Rocky Linux 8/9/10**, **CentOS Stream 8/9/10**, **AlmaLinux**, and **RHEL**. It installs:
 - Executables: `/usr/bin/conftune` and `/usr/bin/conftune-fc`
-- App core: `/usr/share/conftune-fc/`
+- App core: `/usr/share/conftune-fc/` (Python bytecode is compiled on-target during `%post`)
 - Polkit policy: `/usr/share/polkit-1/actions/io.github.conftune_fc.policy`
 - Desktop entry: `/usr/share/applications/conftune-fc.desktop`
-- Icon: `/usr/share/icons/hicolor/scalable/apps/conftune-fc.svg`
+- Full icons hierarchy: `/usr/share/icons/hicolor/` (16x16 through 512x512 raster PNGs + scalable SVG)
 
 ---
 

@@ -200,6 +200,7 @@ class SysctlTuner:
             profile_name=profile_name,
             target_paths=[SYSCTL_CONF_PATH],
             notes=f"Sysctl profile apply: {profile_name}",
+            dry_run=self.safety.dry_run,
         )
 
         # Generate config file content

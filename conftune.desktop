@@ -8,4 +8,5 @@ Terminal=false
 Type=Application
 Categories=System;Settings;HardwareSettings;
 StartupNotify=true
+StartupWMClass=conftune-fc
 Keywords=performance;tune;tuner;fedora;rocky;centos;rhel;sysctl;dnf;zram;docker;podman;kvm;virtualmin;webmin;

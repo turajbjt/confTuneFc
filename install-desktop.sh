@@ -20,8 +20,16 @@ if ! python3 -c "import PyQt6" 2>/dev/null; then
     echo ""
 fi
 
-# Copy icon
+# Copy icons
 cp "${SCRIPT_DIR}/assets/icon.svg" "${ICONS_DIR}/conftune-fc.svg"
+
+# Copy standard raster icons (16x16 to 512x512)
+for size in 16 24 32 48 64 128 256 512; do
+    if [ -f "${SCRIPT_DIR}/assets/icons/${size}x${size}/conftune-fc.png" ]; then
+        mkdir -p "${HOME}/.local/share/icons/hicolor/${size}x${size}/apps"
+        cp "${SCRIPT_DIR}/assets/icons/${size}x${size}/conftune-fc.png" "${HOME}/.local/share/icons/hicolor/${size}x${size}/apps/conftune-fc.png"
+    fi
+done
 
 # Generate desktop file with absolute path to main.py
 cat <<EOF > "${APPS_DIR}/conftune-fc.desktop"
@@ -30,11 +38,12 @@ Name=ConfTune FC
 GenericName=System Performance Tuner
 Comment=Setup, configuration & performance tuning for Fedora, Rocky Linux, and CentOS
 Exec=${SCRIPT_DIR}/main.py
-Icon=${ICONS_DIR}/conftune-fc.svg
+Icon=conftune-fc
 Terminal=false
 Type=Application
 Categories=System;Settings;HardwareSettings;
 StartupNotify=true
+StartupWMClass=conftune-fc
 Keywords=performance;tune;tuner;fedora;rocky;centos;rhel;sysctl;dnf;zram;docker;podman;kvm;virtualmin;webmin;
 EOF
 

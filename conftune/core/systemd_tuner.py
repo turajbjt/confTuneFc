@@ -120,6 +120,7 @@ class SystemdTuner:
             profile_name="journald_tuning",
             target_paths=[JOURNALD_CONF_PATH],
             notes="Cap journald storage size",
+            dry_run=self.safety.dry_run,
         )
 
         content = (
