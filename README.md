@@ -5,11 +5,22 @@
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
-[![Safety](https://img.shields.io/badge/Safety-Pre--Tune%20Snapshots%20%26%201--Click%20Rollback-26a269)](#safety--snapshots)
+[![Safety](https://img.shields.io/badge/Safety-Pre--Tune%20Snapshots%20%26%201--Click%20Rollback-26a269)](docs/SAFETY.md)
+[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passing-brightgreen)](tests/test_core.py)
 
-**ConfTune FC** is a safety-first configuration, setup, and performance tuning application designed specifically for RPM-based Linux distributions, including **Fedora Workstation & Server** (Fedora 40, 41, 44, 45+), **Rocky Linux** (8, 9, 10), and **CentOS Stream / RHEL**.
+**ConfTune FC** is a safety-first configuration, setup, and performance tuning application designed specifically for RPM-based Linux distributions, including **Fedora Workstation & Server** (Fedora 40, 41, 42, 43, 44, 45+), **Rocky Linux** (8, 9, 10), and **CentOS Stream / RHEL**.
 
 ConfTune FC bridges the gap between desktop workstations and headless server nodes, featuring both a modern **GNOME 45+ Adwaita Dark GUI** and a full-featured **headless CLI** for remote SSH administration.
+
+---
+
+## 📚 Documentation Quick Links
+
+- [📥 Installation & Setup Guide](docs/INSTALLATION.md)
+- [💻 Command-Line Interface (CLI) Reference](docs/CLI_REFERENCE.md)
+- [🏗️ Architecture & Design Specification](docs/ARCHITECTURE.md)
+- [🛡️ Safety Engine & Rollback Principles](docs/SAFETY.md)
+- [🤝 Contributing Guidelines](CONTRIBUTING.md)
 
 ---
 
