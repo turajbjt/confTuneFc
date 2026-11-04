@@ -109,7 +109,88 @@ sudo conftune --tune-virtualmin --apply
 
 ---
 
-### 4. DNF & Storage Maintenance
+### 4. Fedy Essentials, Codecs & Desktop Tweaks
+
+#### `--fedy-codecs`
+Installs RPM Fusion Free & Nonfree repositories, followed by comprehensive multimedia codecs: GStreamer plugins (ugly, bad, libav), OpenH264, FFmpeg, and VA-API hardware video acceleration.
+```bash
+sudo conftune --fedy-codecs --apply
+```
+
+#### `--fedy-fonts`
+Deploys subpixel RGB antialiasing and slight LCD filtering configuration to `~/.config/fontconfig/fonts.conf` for maximum typography clarity.
+```bash
+conftune --fedy-fonts
+```
+
+---
+
+### 5. CPU Power, Governor & Energy Management
+
+#### `--governor <GOVERNOR>`
+Applies a CPU scaling governor (`performance`, `powersave`, `schedutil`, `ondemand`) across all available CPU cores.
+```bash
+# Dry run:
+conftune --governor performance
+
+# Apply:
+sudo conftune --governor performance --apply
+```
+
+#### `--epp <MODE>`
+Sets CPU Energy Performance Preference (`performance`, `balance_performance`, `balance_power`, `power`) across all modern AMD Zen and Intel Core cores.
+```bash
+sudo conftune --epp performance --apply
+```
+
+#### `--thp <MODE>`
+Configures Transparent Huge Pages (THP) mode (`always`, `madvise`, `never`).
+```bash
+sudo conftune --thp madvise --apply
+```
+
+---
+
+### 6. Process Scheduling & OOM Defense
+
+#### `--protect-process <NAME> [--oom-score <SCORE>]`
+Protects a critical daemon from Linux Out-Of-Memory termination by adjusting `oom_score_adj` (default -500; -1000 is completely immune).
+```bash
+sudo conftune --protect-process postgres --oom-score -500 --apply
+sudo conftune --protect-process code --oom-score -200 --apply
+```
+
+#### `--tune-oomd`
+Configures `/etc/systemd/oomd.conf.d/99-conftune.conf` with balanced memory pressure and swap thresholds to prevent premature desktop app kills.
+```bash
+sudo conftune --tune-oomd --apply
+```
+
+---
+
+### 7. Autostart, Privacy & Diagnostics
+
+#### `--list-autostart`
+Discovers and lists all user and system login autostart applications (`~/.config/autostart`, `/etc/xdg/autostart`).
+```bash
+conftune --list-autostart
+```
+
+#### `--disable-telemetry`
+Enforces strict privacy: disables GNOME Software usage statistics, crash reporting, and external problem telemetry.
+```bash
+conftune --disable-telemetry
+```
+
+#### `--drive-health`
+Queries storage devices (NVMe & SATA SSDs) for SMART health status and wear assessment.
+```bash
+sudo conftune --drive-health
+```
+
+---
+
+### 8. DNF & Storage Maintenance
 
 #### `--tune-dnf`
 Accelerates package manager operations by updating `/etc/dnf/dnf.conf` with:

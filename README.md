@@ -6,7 +6,7 @@
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Safety](https://img.shields.io/badge/Safety-Pre--Tune%20Snapshots%20%26%201--Click%20Rollback-26a269)](docs/SAFETY.md)
-[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passing-brightgreen)](tests/test_core.py)
+[![Tests](https://img.shields.io/badge/Tests-10%2F10%20Passing-brightgreen)](tests/test_core.py)
 
 **ConfTune FC** is a safety-first configuration, setup, and performance tuning application designed specifically for RPM-based Linux distributions, including **Fedora Workstation & Server** (Fedora 40, 41, 42, 43, 44, 45+), **Rocky Linux** (8, 9, 10), and **CentOS Stream / RHEL**.
 
@@ -32,13 +32,18 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 - **DNF Package Manager Accelerator**: Accelerates DNF4 and DNF5 downloads by configuring multi-threaded parallel downloads (`max_parallel_downloads=10`), fastest mirrors, and cache retention.
 - **Systemd Boot Optimizer**: Analyzes `systemd-analyze blame` bottlenecks and optimizes background daemons.
 - **Journald Log Cap**: Safely restricts systemd journal storage (`SystemMaxUse=200M`/`300M`/`500M`) to stop unbounded log growth.
-- **Storage & NVMe/SSD Discard**: Automates weekly background SSD TRIM (`fstrim.timer`), inspects block device I/O schedulers, and tunes ZRAM compressed swap.
+- **Fedy Post-Install & Media Essentials**: 1-click RPM Fusion Free/Nonfree installation, multimedia codecs (GStreamer, FFmpeg, OpenH264, VA-API), and subpixel RGB font rendering.
+- **CPU Power & Hardware Governance (QuickCPU / auto-cpufreq)**: Energy Performance Preference (EPP) controls, CPU scaling governors, Transparent Huge Pages (THP), and Feral GameMode status.
+- **Process Scheduling & OOM Protection (Process Lasso)**: Tune `systemd-oomd` memory pressure sensitivity and protect critical databases/IDEs with `oom_score_adj` immunity.
+- **Autostart & Crash Diagnostics (Stacer)**: Inspect and manage login autostart launchers, cap `systemd-coredump` disk waste, and control ABRT background daemons.
+- **Privacy & Telemetry Guard (O&O ShutUp)**: 1-click opt-out from GNOME software usage statistics, automatic problem reporting, and crash log transmission.
+- **Storage & NVMe/SSD Discard**: Automates weekly background SSD TRIM (`fstrim.timer`), inspects block device I/O schedulers, checks SMART drive health, and tunes ZRAM compressed swap.
 - **Specialized Server Stacks**:
   - **Virtualmin & Webmin**: Multi-tenant hosting, firewall port 10000, high socket backlogs (`somaxconn=65535`), and rapid socket recycling.
   - **Docker & Podman**: Kernel packet forwarding (`net.ipv4.ip_forward=1`), `br_netfilter` module persistence, and inotify watcher expansion (1,048,576).
   - **KVM & Libvirt Virtualization**: Tuned `virtual-host` profile, KSM (Kernel Samepage Merging) memory deduplication, and reduced swappiness.
 - **Automatic Pre-Tune Snapshots & Rollback**: Every change creates a timestamped snapshot with JSON metadata. Revert any change with **1-click rollback**.
-- **Dual Mode (GUI & Headless CLI)**: Beautiful Adwaita UI for desktop users; clean, non-interactive CLI with `--dry-run` and `--apply` flags for server administrators.
+- **Dual Mode (GUI & Headless CLI)**: Beautiful Adwaita UI with 15 specialized feature tabs for desktop users; clean, non-interactive CLI with `--dry-run` and `--apply` flags for server administrators.
 
 ---
 

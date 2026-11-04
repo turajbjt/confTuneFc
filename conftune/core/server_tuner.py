@@ -92,6 +92,75 @@ class ServerTuner:
                 pass
         return "Unknown"
 
+    def get_selinux_booleans(self) -> List[Dict[str, Any]]:
+        """Query standard server SELinux booleans (HTTP networking, DB access, container cgroups)."""
+        booleans = [
+            ("httpd_can_network_connect", "Allows web servers (Apache/Nginx) to connect to remote ports/APIs."),
+            ("httpd_can_network_connect_db", "Allows web servers to connect to database servers over network."),
+            ("container_manage_cgroup", "Allows containers (Podman/Docker) to manage cgroups directly."),
+            ("ftpd_full_access", "Allows FTP daemons full access to read/write files in home directories."),
+        ]
+        status_list = []
+        if not shutil.which("getsebool"):
+            return status_list
+
+        for b_name, desc in booleans:
+            active = False
+            try:
+                res = subprocess.run(["getsebool", b_name], capture_output=True, text=True, timeout=2)
+                active = "--> on" in res.stdout or "on" in res.stdout.split()
+            except Exception:
+                pass
+            status_list.append({"name": b_name, "active": active, "description": desc})
+
+        return status_list
+
+    def set_selinux_boolean(self, boolean_name: str, enable: bool) -> Tuple[bool, str]:
+        """Toggle an SELinux boolean permanently with setsebool -P."""
+        valid, msg = self.safety.verify_privilege(f"Setting SELinux boolean {boolean_name}")
+        if not valid:
+            return False, msg
+
+        val = "1" if enable else "0"
+        if self.safety.dry_run:
+            return True, f"[DRY RUN] Would execute: setsebool -P {boolean_name} {val}"
+
+        try:
+            res = subprocess.run(["setsebool", "-P", boolean_name, val], capture_output=True, text=True, timeout=15)
+            if res.returncode == 0:
+                self.logger.info(f"Set SELinux boolean {boolean_name} to {enable}.")
+                return True, f"SELinux boolean '{boolean_name}' set to {'on' if enable else 'off'}."
+            return False, res.stderr.strip()
+        except Exception as e:
+            return False, str(e)
+
+    # --- Storage Health (SMART / NVMe) ---
+
+    def get_drive_health_summary(self) -> List[Dict[str, str]]:
+        """Inspect storage health using smartctl or nvme-cli."""
+        drives = []
+        smartctl = shutil.which("smartctl")
+        if not smartctl:
+            return [{"device": "smartctl", "health": "smartctl not installed (install smartmontools)", "temp": "N/A"}]
+
+        # Check /dev/nvme0n1 or /dev/sda
+        candidates = ["/dev/nvme0n1", "/dev/nvme1n1", "/dev/sda", "/dev/sdb"]
+        for dev in candidates:
+            if not os.path.exists(dev):
+                continue
+            try:
+                res = subprocess.run([smartctl, "-H", dev], capture_output=True, text=True, timeout=3)
+                health = "PASSED" if "PASSED" in res.stdout or "OK" in res.stdout else "Inspect"
+                drives.append({
+                    "device": dev,
+                    "health": health,
+                    "status": "Healthy" if health == "PASSED" else "Check Drive",
+                })
+            except Exception:
+                pass
+
+        return drives if drives else [{"device": "Storage", "health": "No SMART drives responding", "status": "OK"}]
+
     def get_firewalld_status(self) -> Dict[str, Any]:
         """Query Firewalld state, active zones, and open ports."""
         status = {

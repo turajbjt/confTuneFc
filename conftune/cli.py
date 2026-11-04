@@ -10,10 +10,15 @@ import sys
 from typing import Optional
 
 from conftune import __version__
+from conftune.core.autostart_tuner import AutostartTuner
 from conftune.core.backup_manager import BackupManager
 from conftune.core.detector import SystemDetector
 from conftune.core.dnf_tuner import DNFTuner
+from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.logger import get_logger, setup_logger
+from conftune.core.power_tuner import PowerTuner
+from conftune.core.privacy_tuner import PrivacyTuner
+from conftune.core.process_tuner import ProcessTuner
 from conftune.core.profiles import PROFILES, get_profile, list_profiles
 from conftune.core.safety import SafetyEngine
 from conftune.core.server_tuner import ServerTuner
@@ -27,7 +32,23 @@ def run_cli(args: argparse.Namespace) -> None:
     setup_logger(verbose=getattr(args, "verbose", False))
     logger = get_logger()
 
-    safety = SafetyEngine(dry_run=not args.apply if (getattr(args, "trim", False) or args.profile or args.tune_dnf or args.tune_containers or args.tune_virt or args.tune_virtualmin) else args.dry_run)
+    write_actions = [
+        getattr(args, "trim", False),
+        bool(args.profile),
+        args.tune_dnf,
+        args.tune_containers,
+        args.tune_virt,
+        args.tune_virtualmin,
+        getattr(args, "fedy_codecs", False),
+        getattr(args, "fedy_fonts", False),
+        bool(getattr(args, "governor", None)),
+        bool(getattr(args, "epp", None)),
+        bool(getattr(args, "thp", None)),
+        bool(getattr(args, "protect_process", None)),
+        getattr(args, "tune_oomd", False),
+        getattr(args, "disable_telemetry", False),
+    ]
+    safety = SafetyEngine(dry_run=not args.apply if any(write_actions) else args.dry_run)
     # If user explicitly specifies --dry-run or omits --apply on write operations
     if args.dry_run:
         safety.dry_run = True
@@ -39,6 +60,11 @@ def run_cli(args: argparse.Namespace) -> None:
     systemd_tuner = SystemdTuner(safety=safety, backup_mgr=backup_mgr)
     storage_tuner = StorageTuner(safety=safety, backup_mgr=backup_mgr)
     server_tuner = ServerTuner(safety=safety, backup_mgr=backup_mgr)
+    fedy_tuner = FedyTuner(safety=safety, backup_mgr=backup_mgr)
+    power_tuner = PowerTuner(safety=safety)
+    process_tuner = ProcessTuner(safety=safety, backup_mgr=backup_mgr)
+    autostart_tuner = AutostartTuner(safety=safety, backup_mgr=backup_mgr)
+    privacy_tuner = PrivacyTuner(safety=safety)
 
     # 1. Status / Overview
     if args.status:
@@ -159,6 +185,86 @@ def run_cli(args: argparse.Namespace) -> None:
         print(f"\n==> Rolling back to snapshot: {snap_id} (dry-run: {safety.dry_run})...")
         ok, msg = backup_mgr.rollback_snapshot(snap_id, dry_run=safety.dry_run)
         print(msg)
+        return
+
+    # Fedy: RPM Fusion & Codecs
+    if getattr(args, "fedy_codecs", False):
+        print("\n==> Installing RPM Fusion & Multimedia Codecs (dry-run: %s)..." % safety.dry_run)
+        ok1, msg1 = fedy_tuner.install_rpmfusion()
+        print("  [RPM Fusion] %s" % msg1)
+        ok2, msg2 = fedy_tuner.install_multimedia_codecs()
+        print("  [Codecs] %s" % msg2)
+        return
+
+    # Fedy: Fonts
+    if getattr(args, "fedy_fonts", False):
+        print("\n==> Configuring Font Rendering (Subpixel RGB)...")
+        ok, msg = fedy_tuner.configure_font_rendering()
+        print("  %s" % msg)
+        return
+
+    # Power: Governor
+    if getattr(args, "governor", None):
+        gov = args.governor
+        print(f"\n==> Setting CPU Governor to '{gov}' across all cores (dry-run: {safety.dry_run})...")
+        ok, msg = power_tuner.set_governor_all_cores(gov)
+        print(f"  {msg}")
+        return
+
+    # Power: EPP
+    if getattr(args, "epp", None):
+        epp = args.epp
+        print(f"\n==> Setting CPU EPP to '{epp}' across all cores (dry-run: {safety.dry_run})...")
+        ok, msg = power_tuner.set_epp_all_cores(epp)
+        print(f"  {msg}")
+        return
+
+    # Power: THP
+    if getattr(args, "thp", None):
+        thp_mode = args.thp
+        print(f"\n==> Setting Transparent Huge Pages (THP) to '{thp_mode}' (dry-run: {safety.dry_run})...")
+        ok, msg = power_tuner.set_thp_mode(thp_mode)
+        print(f"  {msg}")
+        return
+
+    # Process: Protect OOM
+    if getattr(args, "protect_process", None):
+        pname = args.protect_process
+        score = getattr(args, "oom_score", -500)
+        print(f"\n==> Setting OOM Killer Score ({score}) on '{pname}' (dry-run: {safety.dry_run})...")
+        ok, msg = process_tuner.protect_process_by_name(pname, score)
+        print(f"  {msg}")
+        return
+
+    # Process: Tune oomd
+    if getattr(args, "tune_oomd", False):
+        print(f"\n==> Configuring systemd-oomd limits (dry-run: {safety.dry_run})...")
+        ok, msg = process_tuner.configure_oomd_limits()
+        print(f"  {msg}")
+        return
+
+    # Privacy: Disable telemetry
+    if getattr(args, "disable_telemetry", False):
+        print("\n==> Disabling System & Desktop Telemetry...")
+        ok, msg = privacy_tuner.disable_all_telemetry()
+        print(f"  {msg}")
+        return
+
+    # Autostart: List
+    if getattr(args, "list_autostart", False):
+        entries = autostart_tuner.list_autostart_entries()
+        print(f"\n================ Autostart Applications ({len(entries)}) ================")
+        for e in entries:
+            stat = "Enabled" if e["enabled"] else "Disabled"
+            print(f"[{stat}] {e['name']} ({e['scope']}) -> {e['exec']}")
+        return
+
+    # Server: Drive Health
+    if getattr(args, "drive_health", False):
+        drives = server_tuner.get_drive_health_summary()
+        print(f"\n================ Drive Health (SMART / NVMe) ================")
+        for d in drives:
+            print(f"  • {d.get('device')}: Health={d.get('health')} (Status: {d.get('status')})")
         return
 
     # Default fallback: Print status

@@ -25,20 +25,30 @@ from PyQt6.QtWidgets import (
 )
 
 from conftune import __version__
+from conftune.core.autostart_tuner import AutostartTuner
 from conftune.core.backup_manager import BackupManager
 from conftune.core.detector import SystemDetector
 from conftune.core.dnf_tuner import DNFTuner
+from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.logger import get_logger, setup_logger
+from conftune.core.power_tuner import PowerTuner
+from conftune.core.privacy_tuner import PrivacyTuner
+from conftune.core.process_tuner import ProcessTuner
 from conftune.core.safety import SafetyEngine
 from conftune.core.server_tuner import ServerTuner
 from conftune.core.storage_tuner import StorageTuner
 from conftune.core.sysctl_tuner import SysctlTuner
 from conftune.core.systemd_tuner import SystemdTuner
 from conftune.gui.styles import ADWAITA_DARK_STYLE
+from conftune.gui.tab_autostart import AutostartTab
 from conftune.gui.tab_backups import BackupsTab
 from conftune.gui.tab_dnf import DNFTab
+from conftune.gui.tab_fedy import FedyTab
 from conftune.gui.tab_logs import LogsTab
 from conftune.gui.tab_overview import OverviewTab
+from conftune.gui.tab_power import PowerTab
+from conftune.gui.tab_privacy import PrivacyTab
+from conftune.gui.tab_process import ProcessTab
 from conftune.gui.tab_profiles import ProfilesTab
 from conftune.gui.tab_server import ServerTab
 from conftune.gui.tab_specialized import SpecializedTab
@@ -79,6 +89,11 @@ class MainWindow(QMainWindow):
         self.systemd_tuner = SystemdTuner(safety=self.safety, backup_mgr=self.backup_mgr)
         self.storage_tuner = StorageTuner(safety=self.safety, backup_mgr=self.backup_mgr)
         self.server_tuner = ServerTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+        self.fedy_tuner = FedyTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+        self.power_tuner = PowerTuner(safety=self.safety)
+        self.process_tuner = ProcessTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+        self.autostart_tuner = AutostartTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+        self.privacy_tuner = PrivacyTuner(safety=self.safety)
 
         self._init_ui()
         self.logger.info("ConfTune FC GUI initialized.")
@@ -161,6 +176,11 @@ class MainWindow(QMainWindow):
             ("⏱️  Boot & Systemd", "systemd"),
             ("💾  Storage & ZRAM", "storage"),
             ("🌐  Specialized Stacks", "specialized"),
+            ("🚀  Fedy Essentials", "fedy"),
+            ("⚡  CPU & Power Policy", "power"),
+            ("🛡️  Process & OOM Defense", "process"),
+            ("🚀  Autostart Manager", "autostart"),
+            ("🚫  Privacy & Telemetry", "privacy"),
             ("🏢  Server & Security", "server"),
             ("🗄️  Snapshots & Rollback", "backups"),
             ("📋  Audit Logs", "logs"),
@@ -225,15 +245,35 @@ class MainWindow(QMainWindow):
         )
         self.stack.addWidget(self.tab_specialized)
 
-        # 8. Server & Security Tab
+        # 8. Fedy Essentials Tab
+        self.tab_fedy = FedyTab(self.fedy_tuner, self.safety)
+        self.stack.addWidget(self.tab_fedy)
+
+        # 9. Power Policy Tab
+        self.tab_power = PowerTab(self.power_tuner, self.safety)
+        self.stack.addWidget(self.tab_power)
+
+        # 10. Process & OOM Tab
+        self.tab_process = ProcessTab(self.process_tuner, self.safety)
+        self.stack.addWidget(self.tab_process)
+
+        # 11. Autostart Tab
+        self.tab_autostart = AutostartTab(self.autostart_tuner, self.safety)
+        self.stack.addWidget(self.tab_autostart)
+
+        # 12. Privacy Tab
+        self.tab_privacy = PrivacyTab(self.privacy_tuner, self.safety)
+        self.stack.addWidget(self.tab_privacy)
+
+        # 13. Server & Security Tab
         self.tab_server = ServerTab(self.server_tuner, self.safety)
         self.stack.addWidget(self.tab_server)
 
-        # 9. Snapshots & Rollback Tab
+        # 14. Snapshots & Rollback Tab
         self.tab_backups = BackupsTab(self.backup_mgr, self.safety)
         self.stack.addWidget(self.tab_backups)
 
-        # 10. Audit Logs Tab
+        # 15. Audit Logs Tab
         self.tab_logs = LogsTab()
         self.stack.addWidget(self.tab_logs)
 

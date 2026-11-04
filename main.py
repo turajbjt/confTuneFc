@@ -49,6 +49,17 @@ Examples:
     parser.add_argument("--rollback", metavar="ID", help="Roll back system configuration to a specified snapshot ID")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Simulate tuning changes without writing files")
     parser.add_argument("--apply", action="store_true", default=False, help="Commit actual changes to system files (disables dry-run)")
+    parser.add_argument("--fedy-codecs", action="store_true", help="Install RPM Fusion Free/Nonfree and multimedia codecs (VA-API, FFmpeg, GStreamer)")
+    parser.add_argument("--fedy-fonts", action="store_true", help="Configure optimized subpixel RGB antialiasing and font rendering")
+    parser.add_argument("--governor", metavar="GOV", help="Set CPU scaling governor (performance, powersave, schedutil, ondemand)")
+    parser.add_argument("--epp", metavar="MODE", help="Set CPU EPP mode (performance, balance_performance, balance_power, power)")
+    parser.add_argument("--thp", metavar="MODE", help="Set Transparent Huge Pages (always, madvise, never)")
+    parser.add_argument("--protect-process", metavar="NAME", help="Adjust OOM killer score to protect process from termination")
+    parser.add_argument("--oom-score", type=int, default=-500, help="OOM score adjustment (-1000 to 1000, default -500)")
+    parser.add_argument("--tune-oomd", action="store_true", help="Configure systemd-oomd memory pressure and swap thresholds")
+    parser.add_argument("--disable-telemetry", action="store_true", help="Disable GNOME metrics, problem reporting, and telemetry")
+    parser.add_argument("--list-autostart", action="store_true", help="List all user and system login autostart applications")
+    parser.add_argument("--drive-health", action="store_true", help="Query storage device SMART and NVMe health status")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose debug logging")
 
     args = parser.parse_args()
@@ -66,6 +77,16 @@ Examples:
         args.snapshots,
         bool(args.rollback),
         args.dry_run,
+        args.fedy_codecs,
+        args.fedy_fonts,
+        bool(args.governor),
+        bool(args.epp),
+        bool(args.thp),
+        bool(args.protect_process),
+        args.tune_oomd,
+        args.disable_telemetry,
+        args.list_autostart,
+        args.drive_health,
     ]
     is_cli_requested = any(cli_flags)
 

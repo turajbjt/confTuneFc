@@ -85,7 +85,42 @@ Profiles the host system using non-destructive inspection:
 
 ---
 
-### 5. Snapshot & Rollback Engine (`conftune/core/backup_manager.py`)
+### 5. Fedy Post-Install & Media Engine (`conftune/core/fedy_tuner.py`)
+- Automated RPM Fusion Free & Nonfree enablement.
+- Comprehensive multimedia codec bundle installation (GStreamer, FFmpeg, OpenH264, VA-API).
+- Subpixel RGB font rendering & LCD filter deployment.
+- GNOME desktop window header buttons and battery display toggles.
+
+---
+
+### 6. CPU Power & Governance (`conftune/core/power_tuner.py`)
+- Manages hardware energy preference hints (EPP) across AMD Zen and Intel Core CPUs.
+- Dynamic CPU scaling governor controls (`performance`, `powersave`, `schedutil`).
+- Transparent Huge Pages (THP) mode switcher (`always`, `madvise`, `never`).
+- Power-profiles-daemon and Feral GameMode status integration.
+
+---
+
+### 7. Process Scheduling & OOM Protection (`conftune/core/process_tuner.py`)
+- Configures `systemd-oomd` memory pressure ceilings to prevent premature task termination.
+- Exposes `oom_score_adj` adjustment to protect mission-critical databases, IDEs, and desktop processes.
+
+---
+
+### 8. Autostart & Crash Diagnostics (`conftune/core/autostart_tuner.py`)
+- Discovers and toggles login autostart launchers (`~/.config/autostart`, `/etc/xdg/autostart`).
+- Caps `systemd-coredump` disk consumption in `/etc/systemd/coredump.conf.d/`.
+- Controls Automatic Bug Reporting Tool (ABRT) background daemons.
+
+---
+
+### 9. Privacy & Telemetry Guard (`conftune/core/privacy_tuner.py`)
+- 1-click opt-out from GNOME software usage statistics and automated bug transmission.
+- Core dump collection disablement for privacy-conscious installations.
+
+---
+
+### 10. Snapshot & Rollback Engine (`conftune/core/backup_manager.py`)
 - Before modifying any system target file, a snapshot directory is created under `/var/lib/conftune/backups` (or `~/.local/share/conftune/backups`).
 - Stores copies of original files and writes a `metadata.json` manifest.
 - Rollback re-copies original files, deletes newly generated files, and reloads `sysctl --system` and `systemctl daemon-reload`.
