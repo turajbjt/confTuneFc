@@ -26,6 +26,7 @@ flowchart TD
         Core --> Systemd[systemd_tuner.py: Blame, Services, journald]
         Core --> Storage[storage_tuner.py: TRIM, Schedulers, ZRAM]
         Core --> Server[server_tuner.py: tuned-adm, Firewalld, SELinux, SSH]
+        Core --> Presets[preset_manager.py: Bundles, Deploy Scripts, ISOs]
     end
 
     subgraph Safety & State Management
@@ -127,5 +128,13 @@ Profiles the host system using non-destructive inspection:
 
 ---
 
-### 6. Threading Model (`conftune/gui/workers.py`)
-All asynchronous operations (profile application, TRIM execution, log vacuuming) run on background `QThread` instances using `run_async_task()`. The GUI main thread handles rendering and user interaction without blocking.
+### 11. Presets, Standalone Deploy & ISO Engine (`conftune/core/preset_manager.py`)
+- **System Capture & Portable Archives**: Inspects active sysctls, `/etc/dnf/dnf.conf`, journald limits, tuned profile, and CPU governors; bundles them into portable compressed `.conftune.tar.gz` archives with JSON manifests.
+- **Standalone 1-File Deployment Script**: Generates self-contained Bash scripts (`deploy.sh`) containing embedded configuration payloads that can be copied over SSH and run on fresh headless machines with zero dependencies.
+- **Anaconda Kickstart Generator**: Generates clean `.ks` configuration files with `%post` install directives for automated Red Hat / Fedora OS provisioning.
+- **Bootable ISO Customization**: Integrates with official `mkksiso` (from `lorax`) to non-destructively inject Kickstart files into Fedora, Rocky Linux, or CentOS ISO images for bootable USB deployment.
+
+---
+
+### 12. Threading Model (`conftune/gui/workers.py`)
+All asynchronous operations (profile application, TRIM execution, log vacuuming, ISO generation) run on background `QThread` instances using `run_async_task()`. The GUI main thread handles rendering and user interaction without blocking.

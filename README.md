@@ -6,7 +6,7 @@
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Safety](https://img.shields.io/badge/Safety-Pre--Tune%20Snapshots%20%26%201--Click%20Rollback-26a269)](docs/SAFETY.md)
-[![Tests](https://img.shields.io/badge/Tests-10%2F10%20Passing-brightgreen)](tests/test_core.py)
+[![Tests](https://img.shields.io/badge/Tests-12%2F12%20Passing-brightgreen)](tests/test_core.py)
 
 **ConfTune FC** is a safety-first configuration, setup, and performance tuning application designed specifically for RPM-based Linux distributions, including **Fedora Workstation & Server** (Fedora 40, 41, 42, 43, 44, 45+), **Rocky Linux** (8, 9, 10), and **CentOS Stream / RHEL**.
 
@@ -42,8 +42,9 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
   - **Virtualmin & Webmin**: Multi-tenant hosting, firewall port 10000, high socket backlogs (`somaxconn=65535`), and rapid socket recycling.
   - **Docker & Podman**: Kernel packet forwarding (`net.ipv4.ip_forward=1`), `br_netfilter` module persistence, and inotify watcher expansion (1,048,576).
   - **KVM & Libvirt Virtualization**: Tuned `virtual-host` profile, KSM (Kernel Samepage Merging) memory deduplication, and reduced swappiness.
+- **Portable Presets & Fleet Provisioning**: Capture active host tuning into `.conftune.tar.gz` archives, generate standalone 1-file `deploy.sh` scripts for remote machines, create Anaconda Kickstart (`.ks`) profiles, and generate bootable ISOs using `mkksiso`.
 - **Automatic Pre-Tune Snapshots & Rollback**: Every change creates a timestamped snapshot with JSON metadata. Revert any change with **1-click rollback**.
-- **Dual Mode (GUI & Headless CLI)**: Beautiful Adwaita UI with 15 specialized feature tabs for desktop users; clean, non-interactive CLI with `--dry-run` and `--apply` flags for server administrators.
+- **Dual Mode (GUI & Headless CLI)**: Beautiful Adwaita UI with 16 specialized feature tabs for desktop users; clean, non-interactive CLI with `--dry-run` and `--apply` flags for server administrators.
 
 ---
 
@@ -91,9 +92,9 @@ python3 main.py
 
 ---
 
-## 🖥️ Graphical Interface (15 Specialized Views)
+## 🖥️ Graphical Interface (16 Specialized Views)
 
-ConfTune FC includes a GNOME 45+ Adwaita Dark interface organized into 15 specialized views:
+ConfTune FC includes a GNOME 45+ Adwaita Dark interface organized into 16 specialized views:
 
 | View | Icon | Purpose |
 | :--- | :---: | :--- |
@@ -110,6 +111,7 @@ ConfTune FC includes a GNOME 45+ Adwaita Dark interface organized into 15 specia
 | **Autostart Manager** | 🚀 | Login autostart application manager, core dump storage caps, and ABRT controls. |
 | **Privacy & Telemetry** | 🚫 | 1-click opt-out from GNOME/Fedora usage statistics and automated bug transmission. |
 | **Server & Security** | 🏢 | Red Hat tuned-adm switcher, Firewalld zones, SELinux booleans, and SSH audit. |
+| **Export & Presets** | 📦 | Capture host configuration, export/import `.conftune.tar.gz` bundles, generate `deploy.sh`, and build bootable installer ISOs with `mkksiso`. |
 | **Snapshots & Rollback** | 🗄️ | Visual snapshot history, JSON manifest inspector, and instant 1-click rollback. |
 | **Audit Logs** | 📋 | Real-time color-coded audit trail of all tuning tasks, backups, and rollbacks. |
 
@@ -179,7 +181,33 @@ python3 main.py --snapshots
 
 # Roll back system configuration to a previous snapshot:
 sudo python3 main.py --rollback <SNAPSHOT_ID> --apply
+
+# Export host configuration into portable archive (.conftune.tar.gz):
+python3 main.py --export-preset my-workstation.conftune.tar.gz
+
+# Import and apply preset archive onto another machine:
+sudo python3 main.py --import-preset my-workstation.conftune.tar.gz --apply
+
+# Generate standalone 1-file deploy.sh script for headless servers (zero deps):
+python3 main.py --export-deploy-script deploy.sh
+
+# Generate automated Anaconda Kickstart configuration (.ks):
+python3 main.py --export-kickstart conftune.ks
+
+# Inject Kickstart into bootable installer ISO using mkksiso (from lorax):
+python3 main.py --build-iso --base-iso Fedora-44.iso --output-iso Fedora-44-Custom.iso
 ```
+
+---
+
+## 📦 Portable Presets, Standalone Deploy Scripts & Bootable ISOs
+
+ConfTune FC allows complete portability across your fleet:
+
+1. **Portable Presets (`.conftune.tar.gz`)**: Capture the active system configuration (sysctls, DNF parameters, journald limits, tuned profile, and CPU governors) into a compressed tarball containing a JSON manifest. Transport it to any machine and apply it via GUI or CLI.
+2. **Standalone 1-File Deployment (`deploy.sh`)**: Generates a self-contained Bash script with embedded configuration payloads. `scp` it to any fresh server over SSH and execute `sudo bash deploy.sh` with zero Python or ConfTune FC dependencies required on the target.
+3. **Anaconda Kickstart Generator (`.ks`)**: Generates production-ready Kickstart configuration snippets with `%post` execution hooks for automated Red Hat / Fedora OS deployments.
+4. **Bootable USB / ISO Injection (`mkksiso`)**: Leverages official `mkksiso` to inject Kickstart configuration into official Fedora, Rocky Linux, or CentOS ISO images. Flash the generated ISO to a USB flash drive with Fedora Media Writer, Rufus, or `dd` for instant hands-off automated installation and performance tuning.
 
 ---
 

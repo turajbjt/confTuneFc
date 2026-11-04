@@ -60,6 +60,13 @@ Examples:
     parser.add_argument("--disable-telemetry", action="store_true", help="Disable GNOME metrics, problem reporting, and telemetry")
     parser.add_argument("--list-autostart", action="store_true", help="List all user and system login autostart applications")
     parser.add_argument("--drive-health", action="store_true", help="Query storage device SMART and NVMe health status")
+    parser.add_argument("--export-preset", metavar="FILE", help="Export active host tuning into a portable .conftune.tar.gz preset archive")
+    parser.add_argument("--import-preset", metavar="FILE", help="Import and apply a .conftune.tar.gz preset archive (dry-run by default unless --apply)")
+    parser.add_argument("--export-deploy-script", metavar="FILE", help="Generate standalone 1-file deploy.sh script for remote servers")
+    parser.add_argument("--export-kickstart", metavar="FILE", help="Generate an automated Anaconda Kickstart (.ks) file for OS installations")
+    parser.add_argument("--build-iso", action="store_true", help="Inject Kickstart into bootable ISO image using mkksiso")
+    parser.add_argument("--base-iso", metavar="ISO", help="Path to base Fedora/Rocky/CentOS ISO image for --build-iso")
+    parser.add_argument("--output-iso", metavar="ISO", help="Output path for automated custom ISO image for --build-iso")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose debug logging")
 
     args = parser.parse_args()
@@ -87,6 +94,11 @@ Examples:
         args.disable_telemetry,
         args.list_autostart,
         args.drive_health,
+        bool(args.export_preset),
+        bool(args.import_preset),
+        bool(args.export_deploy_script),
+        bool(args.export_kickstart),
+        args.build_iso,
     ]
     is_cli_requested = any(cli_flags)
 

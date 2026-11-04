@@ -17,6 +17,7 @@ from conftune.core.dnf_tuner import DNFTuner
 from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.logger import get_logger, setup_logger
 from conftune.core.power_tuner import PowerTuner
+from conftune.core.preset_manager import PresetManager
 from conftune.core.privacy_tuner import PrivacyTuner
 from conftune.core.process_tuner import ProcessTuner
 from conftune.core.profiles import PROFILES, get_profile, list_profiles
@@ -47,6 +48,7 @@ def run_cli(args: argparse.Namespace) -> None:
         bool(getattr(args, "protect_process", None)),
         getattr(args, "tune_oomd", False),
         getattr(args, "disable_telemetry", False),
+        bool(getattr(args, "import_preset", None)),
     ]
     safety = SafetyEngine(dry_run=not args.apply if any(write_actions) else args.dry_run)
     # If user explicitly specifies --dry-run or omits --apply on write operations
@@ -65,6 +67,7 @@ def run_cli(args: argparse.Namespace) -> None:
     process_tuner = ProcessTuner(safety=safety, backup_mgr=backup_mgr)
     autostart_tuner = AutostartTuner(safety=safety, backup_mgr=backup_mgr)
     privacy_tuner = PrivacyTuner(safety=safety)
+    preset_mgr = PresetManager(safety=safety, backup_mgr=backup_mgr)
 
     # 1. Status / Overview
     if args.status:
@@ -265,6 +268,62 @@ def run_cli(args: argparse.Namespace) -> None:
         print(f"\n================ Drive Health (SMART / NVMe) ================")
         for d in drives:
             print(f"  • {d.get('device')}: Health={d.get('health')} (Status: {d.get('status')})")
+        return
+
+    # Preset: Export Archive
+    if getattr(args, "export_preset", None):
+        out_f = args.export_preset
+        print(f"\n==> Exporting Host Configuration to '{out_f}'...")
+        ok, msg = preset_mgr.export_preset_archive(out_f)
+        print(f"  {msg}")
+        return
+
+    # Preset: Import Archive
+    if getattr(args, "import_preset", None):
+        in_f = args.import_preset
+        print(f"\n==> Importing Preset from '{in_f}' (dry-run: {safety.dry_run})...")
+        ok, msg, pdata = preset_mgr.import_preset_archive(in_f)
+        if not ok:
+            print(f"  Error: {msg}", file=sys.stderr)
+            sys.exit(1)
+        print(f"  Loaded preset: {pdata.get('name')}")
+        ok_a, msg_a = preset_mgr.apply_preset(pdata)
+        print(f"  {msg_a}")
+        return
+
+    # Preset: Standalone Script
+    if getattr(args, "export_deploy_script", None):
+        out_sh = args.export_deploy_script
+        print(f"\n==> Generating Standalone Deployment Script to '{out_sh}'...")
+        current_data = preset_mgr.capture_current_settings(name="Host Tuning")
+        ok, msg = preset_mgr.generate_standalone_script(current_data, out_sh)
+        print(f"  {msg}")
+        return
+
+    # Preset: Kickstart
+    if getattr(args, "export_kickstart", None):
+        out_ks = args.export_kickstart
+        print(f"\n==> Generating Anaconda Kickstart Configuration to '{out_ks}'...")
+        current_data = preset_mgr.capture_current_settings(name="Host Tuning")
+        ok, msg = preset_mgr.generate_kickstart(current_data, out_ks)
+        print(f"  {msg}")
+        return
+
+    # Preset: Build ISO
+    if getattr(args, "build_iso", False):
+        base_iso = getattr(args, "base_iso", None)
+        out_iso = getattr(args, "output_iso", None)
+        if not base_iso or not out_iso:
+            print("Error: --build-iso requires both --base-iso <FILE> and --output-iso <FILE>.", file=sys.stderr)
+            sys.exit(1)
+        print(f"\n==> Injecting Kickstart into '{base_iso}' -> '{out_iso}' (dry-run: {safety.dry_run})...")
+        tmp_ks = "/tmp/conftune_cli_temp.ks"
+        current_data = preset_mgr.capture_current_settings(name="Host Tuning")
+        preset_mgr.generate_kickstart(current_data, tmp_ks)
+        ok, msg = preset_mgr.build_custom_iso(base_iso, tmp_ks, out_iso)
+        if os.path.exists(tmp_ks):
+            os.remove(tmp_ks)
+        print(f"  {msg}")
         return
 
     # Default fallback: Print status

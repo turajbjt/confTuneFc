@@ -234,6 +234,57 @@ sudo conftune --rollback snap_20261103_211334_server --apply
 
 ---
 
+### 9. Presets, Standalone Scripts & ISO Deployment
+
+#### `--export-preset <FILE>`
+Captures active host tuning (sysctls, DNF settings, journald cap, tuned profile, CPU governor) and packages it into a portable, compressed archive (`.conftune.tar.gz`).
+
+```bash
+conftune --export-preset /tmp/my-fedora-workstation.conftune.tar.gz
+```
+
+#### `--import-preset <FILE>`
+Imports and applies a `.conftune.tar.gz` preset archive to the target machine. Creates pre-tune snapshots before writing. Runs in dry-run mode by default unless `--apply` is specified.
+
+```bash
+# Preview changes:
+conftune --import-preset /tmp/my-fedora-workstation.conftune.tar.gz
+
+# Apply to machine:
+sudo conftune --import-preset /tmp/my-fedora-workstation.conftune.tar.gz --apply
+```
+
+#### `--export-deploy-script <FILE>`
+Generates a standalone, self-contained `deploy.sh` script containing all active sysctls and DNF tuning parameters. The resulting script requires zero dependencies and can be run directly on any fresh server via SSH.
+
+```bash
+# Generate script:
+conftune --export-deploy-script /tmp/deploy-webserver.sh
+
+# Deploy to remote host:
+scp /tmp/deploy-webserver.sh admin@192.168.1.150:/tmp/
+ssh admin@192.168.1.150 "sudo bash /tmp/deploy-webserver.sh"
+```
+
+#### `--export-kickstart <FILE>`
+Generates an automated Red Hat / Fedora Kickstart (`.ks`) post-install snippet containing `%post` script hooks to automatically tune fresh OS installations.
+
+```bash
+conftune --export-kickstart /tmp/conftune-postinstall.ks
+```
+
+#### `--build-iso --base-iso <ISO> --output-iso <ISO>`
+Injects a Kickstart file into an official Fedora Workstation/Server, Rocky Linux, or CentOS Stream ISO image using `mkksiso` (from package `lorax`). The resulting ISO can be flashed to a USB drive for hands-off, auto-tuned installations.
+
+```bash
+# Inject kickstart into official ISO:
+conftune --build-iso \
+    --base-iso Fedora-Workstation-Live-x86_64-44.iso \
+    --output-iso Fedora-44-ConfTune-Automated.iso
+```
+
+---
+
 ## 🤖 Automation & CI/CD Examples
 
 ### Automated Server Bootstrap (Cloud-Init / Bash Script)

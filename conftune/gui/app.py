@@ -32,6 +32,7 @@ from conftune.core.dnf_tuner import DNFTuner
 from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.logger import get_logger, setup_logger
 from conftune.core.power_tuner import PowerTuner
+from conftune.core.preset_manager import PresetManager
 from conftune.core.privacy_tuner import PrivacyTuner
 from conftune.core.process_tuner import ProcessTuner
 from conftune.core.safety import SafetyEngine
@@ -47,6 +48,7 @@ from conftune.gui.tab_fedy import FedyTab
 from conftune.gui.tab_logs import LogsTab
 from conftune.gui.tab_overview import OverviewTab
 from conftune.gui.tab_power import PowerTab
+from conftune.gui.tab_presets import PresetsTab
 from conftune.gui.tab_privacy import PrivacyTab
 from conftune.gui.tab_process import ProcessTab
 from conftune.gui.tab_profiles import ProfilesTab
@@ -94,6 +96,7 @@ class MainWindow(QMainWindow):
         self.process_tuner = ProcessTuner(safety=self.safety, backup_mgr=self.backup_mgr)
         self.autostart_tuner = AutostartTuner(safety=self.safety, backup_mgr=self.backup_mgr)
         self.privacy_tuner = PrivacyTuner(safety=self.safety)
+        self.preset_mgr = PresetManager(safety=self.safety, backup_mgr=self.backup_mgr)
 
         self._init_ui()
         self.logger.info("ConfTune FC GUI initialized.")
@@ -182,6 +185,7 @@ class MainWindow(QMainWindow):
             ("🚀  Autostart Manager", "autostart"),
             ("🚫  Privacy & Telemetry", "privacy"),
             ("🏢  Server & Security", "server"),
+            ("💿  Deploy, Presets & ISO", "presets"),
             ("🗄️  Snapshots & Rollback", "backups"),
             ("📋  Audit Logs", "logs"),
         ]
@@ -269,11 +273,15 @@ class MainWindow(QMainWindow):
         self.tab_server = ServerTab(self.server_tuner, self.safety)
         self.stack.addWidget(self.tab_server)
 
-        # 14. Snapshots & Rollback Tab
+        # 14. Deploy, Presets & ISO Tab
+        self.tab_presets = PresetsTab(self.preset_mgr, self.safety)
+        self.stack.addWidget(self.tab_presets)
+
+        # 15. Snapshots & Rollback Tab
         self.tab_backups = BackupsTab(self.backup_mgr, self.safety)
         self.stack.addWidget(self.tab_backups)
 
-        # 15. Audit Logs Tab
+        # 16. Audit Logs Tab
         self.tab_logs = LogsTab()
         self.stack.addWidget(self.tab_logs)
 

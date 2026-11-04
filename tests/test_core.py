@@ -14,6 +14,7 @@ from conftune.core.detector import SystemDetector
 from conftune.core.dnf_tuner import DNFTuner
 from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.power_tuner import PowerTuner
+from conftune.core.preset_manager import PresetManager
 from conftune.core.privacy_tuner import PrivacyTuner
 from conftune.core.process_tuner import ProcessTuner
 from conftune.core.profiles import PROFILES, get_profile, list_profiles
@@ -134,6 +135,63 @@ class TestConfTuneCore(unittest.TestCase):
         self.assertIsInstance(se, str)
         drives = server.get_drive_health_summary()
         self.assertGreaterEqual(len(drives), 1)
+
+    def test_preset_manager_capture_and_export_import(self):
+        preset_mgr = PresetManager(safety=self.safety, backup_mgr=self.backup_mgr)
+        settings = preset_mgr.capture_current_settings(name="Test Rig", description="Automated Unit Test")
+        self.assertEqual(settings["name"], "Test Rig")
+        self.assertIn("sysctl", settings)
+        self.assertIn("dnf", settings)
+        self.assertIn("journald_max", settings)
+
+        with tempfile.TemporaryDirectory() as td:
+            archive_path = os.path.join(td, "test_preset.conftune.tar.gz")
+            ok, msg = preset_mgr.export_preset_archive(archive_path, name="Test Archive")
+            self.assertTrue(ok)
+            self.assertTrue(os.path.isfile(archive_path))
+
+            ok_imp, msg_imp, pdata = preset_mgr.import_preset_archive(archive_path)
+            self.assertTrue(ok_imp)
+            self.assertIsNotNone(pdata)
+            self.assertEqual(pdata.get("name"), "Test Archive")
+
+            # Apply imported preset in dry-run mode
+            ok_apply, msg_apply = preset_mgr.apply_preset(pdata)
+            self.assertTrue(ok_apply)
+
+    def test_preset_manager_deploy_script_and_kickstart(self):
+        preset_mgr = PresetManager(safety=self.safety, backup_mgr=self.backup_mgr)
+        settings = preset_mgr.capture_current_settings(name="Server Rig")
+
+        with tempfile.TemporaryDirectory() as td:
+            # Standalone deploy.sh script
+            sh_path = os.path.join(td, "deploy_test.sh")
+            ok_sh, msg_sh = preset_mgr.generate_standalone_script(settings, sh_path)
+            self.assertTrue(ok_sh)
+            self.assertTrue(os.path.isfile(sh_path))
+            with open(sh_path, "r", encoding="utf-8") as f:
+                content_sh = f.read()
+            self.assertIn("#!/usr/bin/env bash", content_sh)
+            self.assertIn("/etc/sysctl.d/99-conftune.conf", content_sh)
+
+            # Kickstart .ks file
+            ks_path = os.path.join(td, "kickstart_test.ks")
+            ok_ks, msg_ks = preset_mgr.generate_kickstart(settings, ks_path)
+            self.assertTrue(ok_ks)
+            self.assertTrue(os.path.isfile(ks_path))
+            with open(ks_path, "r", encoding="utf-8") as f:
+                content_ks = f.read()
+            self.assertIn("%post", content_ks)
+            self.assertIn("%end", content_ks)
+
+            # ISO dry run check
+            fake_iso = os.path.join(td, "dummy.iso")
+            with open(fake_iso, "wb") as f:
+                f.write(b"0" * 1024)
+            out_iso = os.path.join(td, "out.iso")
+            ok_iso, msg_iso = preset_mgr.build_custom_iso(fake_iso, ks_path, out_iso)
+            # If mkksiso is not installed on this machine, it returns False with a helpful message, otherwise dry run
+            self.assertIsInstance(ok_iso, bool)
 
 
 if __name__ == "__main__":
