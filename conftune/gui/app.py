@@ -53,7 +53,7 @@ from conftune.gui.tab_privacy import PrivacyTab
 from conftune.gui.tab_process import ProcessTab
 from conftune.gui.tab_profiles import ProfilesTab
 from conftune.gui.tab_server import ServerTab
-from conftune.gui.auth import prompt_root_required
+from conftune.gui.auth import prompt_root_required, relaunch_as_root
 from conftune.gui.tab_specialized import SpecializedTab
 from conftune.gui.tab_storage import StorageTab
 from conftune.gui.tab_sysctl import SysctlTab
@@ -156,10 +156,10 @@ class MainWindow(QMainWindow):
         h_layout.addWidget(self.mode_pill)
 
         # Elevate Button if running unprivileged
-        if not is_root and (self.safety.has_sudo or self.safety.has_pkexec):
-            self.btn_elevate = QPushButton("🛡️ Elevate (sudo)")
+        if not is_root and self.safety.has_pkexec:
+            self.btn_elevate = QPushButton("🛡️ Elevate (pkexec)")
             self.btn_elevate.setProperty("class", "primary")
-            self.btn_elevate.clicked.connect(self._elevate_root)
+            self.btn_elevate.clicked.connect(self._relaunch_as_root)
             h_layout.addWidget(self.btn_elevate)
 
         main_layout.addWidget(header)
@@ -304,32 +304,9 @@ class MainWindow(QMainWindow):
     def _on_nav_changed(self, row: int):
         self.stack.setCurrentIndex(row)
 
-    def _elevate_root(self):
-        """Elevate ConfTune FC session to administrator mode via in-app sudo."""
-        ok = prompt_root_required(
-            self,
-            "Elevate ConfTune FC to Administrator Mode",
-            self.safety,
-            on_elevated=self._on_session_elevated,
-        )
-        if ok:
-            QMessageBox.information(
-                self,
-                "Administrator Access Unlocked",
-                "Session successfully elevated with sudo privileges! All administrative tuning controls are now unlocked.",
-            )
-
-    def _on_session_elevated(self):
-        """Update GUI indicators and refresh tabs after successful elevation."""
-        user_name = os.environ.get("USER", "user")
-        if hasattr(self, "mode_pill"):
-            self.mode_pill.setText(f"🛡️ Mode: Elevated (sudo: {user_name})")
-            self.mode_pill.setObjectName("pill_root")
-            self.mode_pill.style().unpolish(self.mode_pill)
-            self.mode_pill.style().polish(self.mode_pill)
-        if hasattr(self, "btn_elevate"):
-            self.btn_elevate.setVisible(False)
-        self.logger.info("ConfTune FC session successfully elevated to administrator mode via sudo.")
+    def _relaunch_as_root(self):
+        """Relaunch ConfTune FC as root via PolicyKit (pkexec) with handshake."""
+        relaunch_as_root(self, prompt_confirm=True, action_description="enable system-wide tuning controls")
 
 
 def run_gui(ready_signal: bool = False) -> None:
@@ -344,6 +321,13 @@ def run_gui(ready_signal: bool = False) -> None:
     window.show()
 
     if ready_signal:
-        print("CONFTUNE_READY", flush=True)
+        # Signal readiness to parent process waiting on pipe
+        try:
+            print("CONFTUNE_ELEVATED_READY", flush=True)
+            devnull = open(os.devnull, "w")
+            os.dup2(devnull.fileno(), sys.stdout.fileno())
+            os.dup2(devnull.fileno(), sys.stderr.fileno())
+        except Exception:
+            pass
 
     sys.exit(app.exec())

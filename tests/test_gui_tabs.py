@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 from PyQt6.QtCore import QCoreApplication
-from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 
 from conftune.core.autostart_tuner import AutostartTuner
 from conftune.core.backup_manager import BackupManager
@@ -124,10 +124,52 @@ class TestGUITabs(unittest.TestCase):
             self.assertFalse(dialog.lbl_error.isHidden())
             self.assertIn("Incorrect password", dialog.lbl_error.text())
 
-        # 4. Fallback warning when no safety engine attached
-        res_fallback = prompt_root_required(None, "Test Action")
-        self.assertFalse(res_fallback)
-        self.mock_warn.assert_called()
+        # 4. Prompt root triggers pkexec relaunch
+        with patch("conftune.gui.auth.relaunch_as_root") as mock_relaunch:
+            res_pkexec = prompt_root_required(None, "Test Action")
+            self.assertFalse(res_pkexec)
+            mock_relaunch.assert_called_once()
+
+    def test_elevation_worker_and_relaunch(self):
+        from conftune.gui.auth import ElevationWorker, relaunch_as_root
+        # 1. ElevationWorker success
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.stdout.readline.return_value = "CONFTUNE_ELEVATED_READY\n"
+            mock_popen.return_value = mock_proc
+
+            worker = ElevationWorker(["dummy_cmd"])
+            succeeded = []
+            worker.elevation_succeeded.connect(lambda: succeeded.append(True))
+            worker.run()
+            self.assertEqual(len(succeeded), 1)
+
+        # 2. ElevationWorker cancellation
+        with patch("subprocess.Popen") as mock_popen:
+            mock_proc = MagicMock()
+            mock_proc.stdout.readline.return_value = ""
+            mock_proc.wait.return_value = 126
+            mock_proc.returncode = 126
+            mock_proc.stderr.read.return_value = "Not authorized"
+            mock_popen.return_value = mock_proc
+
+            worker = ElevationWorker(["dummy_cmd"])
+            failed = []
+            worker.elevation_failed.connect(lambda err: failed.append(err))
+            worker.run()
+            self.assertEqual(len(failed), 1)
+            self.assertEqual(failed[0], "cancelled")
+
+        # 3. relaunch_as_root when already root
+        dummy_parent = QWidget()
+        with patch("os.geteuid", return_value=0):
+            relaunch_as_root(dummy_parent)
+            self.mock_info.assert_called()
+
+        # 4. relaunch_as_root when pkexec missing
+        with patch("os.geteuid", return_value=1000), patch("shutil.which", return_value=None):
+            relaunch_as_root(dummy_parent)
+            self.mock_crit.assert_called()
 
     def test_root_locked_offerings_when_unprivileged(self):
         safety_user = SafetyEngine(dry_run=True)
@@ -524,9 +566,9 @@ class TestGUITabs(unittest.TestCase):
             self.assertEqual(window.stack.currentIndex(), i)
 
         # Test elevation method handler
-        with patch("conftune.gui.app.prompt_root_required", return_value=True):
-            window._elevate_root()
-            self.mock_info.assert_called()
+        with patch("conftune.gui.app.relaunch_as_root") as mock_relaunch:
+            window._relaunch_as_root()
+            mock_relaunch.assert_called_once()
 
 
 if __name__ == "__main__":
