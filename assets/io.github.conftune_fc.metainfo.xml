@@ -51,6 +51,14 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.3" date="2026-11-05">
+      <description>
+        <p>UI visual polish release:</p>
+        <ul>
+          <li>Fixed label and typography background blending across cards, header bar, and dialogs by enforcing transparent widget backgrounds</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.2" date="2026-11-05">
       <description>
         <p>Privilege escalation and GUI presentation release:</p>

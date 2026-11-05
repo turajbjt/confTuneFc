@@ -58,7 +58,17 @@ QFrame#header_bar {
     padding: 10px 16px;
 }
 
+/* Typography & Labels - Transparent background so text blends seamlessly into cards, headers, and dialogs */
+QLabel {
+    background-color: transparent;
+}
+
+QCheckBox, QRadioButton {
+    background-color: transparent;
+}
+
 QLabel#app_title {
+    background-color: transparent;
     font-size: 18px;
     font-weight: bold;
     color: #ffffff;
@@ -238,7 +248,12 @@ QCheckBox::indicator:checked {
     border-color: #1c71d8;
 }
 
-/* ScrollBars */
+/* ScrollBars & ScrollArea */
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
 QScrollBar:vertical {
     background: #1e1e1e;
     width: 10px;

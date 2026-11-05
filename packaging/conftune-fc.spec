@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.2
+Version:        1.0.3
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,9 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.3-1
+- Fix label and text background blending so text widgets render with transparent backgrounds over cards, header bar, and dialogs
+
 * Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.2-1
 - Fix PolicyKit privilege escalation with proven confclean-fc asynchronous handshake
 - Fix Wayland/XWayland display authorization with xhost localroot and QT_QPA_PLATFORM=xcb
