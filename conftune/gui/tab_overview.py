@@ -82,24 +82,6 @@ class OverviewTab(QWidget):
         self.h_layout.setSpacing(10)
         layout.addWidget(self.health_card)
 
-        # Beta Notice & Safety Card
-        beta_card = QFrame()
-        beta_card.setProperty("class", "card")
-        b_lay = QHBoxLayout(beta_card)
-        b_lay.setContentsMargins(14, 10, 14, 10)
-        b_lay.setSpacing(12)
-        lbl_b_icon = QLabel("⚠️")
-        lbl_b_icon.setStyleSheet("font-size: 20px;")
-        lbl_b_text = QLabel(
-            "<b>ConfTune FC Beta Software Notice:</b> Always verify configuration parameters in simulation (dry run) mode "
-            "before applying changes. ConfTune FC creates automated safety snapshots, but independent system backups are always recommended."
-        )
-        lbl_b_text.setStyleSheet("color: #ffbe6f; font-size: 12px; line-height: 1.4;")
-        lbl_b_text.setWordWrap(True)
-        b_lay.addWidget(lbl_b_icon)
-        b_lay.addWidget(lbl_b_text, 1)
-        layout.addWidget(beta_card)
-
         layout.addStretch()
         scroll.setWidget(container)
         main_layout.addWidget(scroll)
