@@ -389,7 +389,7 @@ def print_system_status(detector: SystemDetector, server_tuner: ServerTuner, sys
 
     print(f"\n╔══════════════════════════════════════════════════════════════════════════╗")
     print(f"║                   ConfTune FC - System Performance Status                ║")
-    print(f"║                   Version {__version__:<10} (Fedora / RPM Edition)                 ║")
+    print(f"║                   Version {__version__:<6} [BETA] (Fedora / RPM Edition)          ║")
     print(f"╚══════════════════════════════════════════════════════════════════════════╝\n")
 
     print(f"  Operating System  : {os_info.get('pretty_name')} ({os_info.get('arch')})")

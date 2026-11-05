@@ -2,7 +2,7 @@
 ### Fedora, Rocky Linux & CentOS System Setup, Configuration & Performance Tuner
 
 [![Linux](https://img.shields.io/badge/Platform-Fedora%20%7C%20Rocky%20%7C%20CentOS%20%7C%20RHEL-blue?logo=fedora)](https://getfedora.org)
-[![Version](https://img.shields.io/badge/Version-1.0.3-blue)](packaging/)
+[![Version](https://img.shields.io/badge/Version-1.0.4-blue)](packaging/)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![RPM Package](https://img.shields.io/badge/RPM-Universal%20noarch-red?logo=redhat)](packaging/)
@@ -22,8 +22,22 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 - [💻 Command-Line Interface (CLI) Reference](docs/CLI_REFERENCE.md)
 - [🏗️ Architecture & Design Specification](docs/ARCHITECTURE.md)
 - [🛡️ Safety Engine & Rollback Principles](docs/SAFETY.md)
-- [📝 Release Notes (v1.0.3)](docs/RELEASE_NOTES_v1.0.3.md)
+- [📝 Release Notes (v1.0.4)](docs/RELEASE_NOTES_v1.0.4.md)
 - [🤝 Contributing Guidelines](CONTRIBUTING.md)
+
+---
+
+> [!CAUTION]
+> ## ⚠️ BETA SOFTWARE — USE AT YOUR OWN RISK
+>
+> **ConfTune FC is currently in active BETA.**
+>
+> While ConfTune FC is architected with multiple conservative safety layers (including pre-tune configuration snapshots, safe parameter boundaries, dry-run simulation enabled by default, and one-click rollback), any software that inspects, modifies, or tunes kernel sysctl parameters, systemd daemons, CPU power policies, and package manager configurations carries inherent risk.
+>
+> * **USE AT YOUR OWN RISK**: This software is provided **"AS IS"**, without warranty of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
+> * **NO LIABILITY / DISCLAIMER**: In no event shall the authors, copyright holders, maintainers, or contributors be held liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, loss of data, system corruption, boot failure, kernel instability, application misbehavior, downtime, or desktop environment instability) arising in any way out of the use or misuse of this software.
+> * **INDEPENDENT BACKUPS RECOMMENDED**: While ConfTune FC automatically creates safety snapshots prior to modifying system configuration files, you should always maintain independent, current backups of your system and critical configurations before applying tuning profiles or kernel changes on production machines.
+> * **ALWAYS VERIFY CANDIDATES**: Dry run simulation mode is enabled by default across both GUI and CLI. Carefully review the suggested parameters, diff previews, and daemon adjustments before unchecking "Dry Run" or supplying the `--apply` flag.
 
 ---
 

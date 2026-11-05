@@ -4,6 +4,21 @@ System tuning involves modifying low-level operating system parameters. To ensur
 
 ---
 
+> [!CAUTION]
+> ## ⚠️ BETA STATUS, DISCLAIMER & USE AT YOUR OWN RISK
+>
+> **ConfTune FC is currently in active BETA.**
+>
+> While every feature has been built with defense-in-depth safety checks and backed by comprehensive unit tests, system tuning inherently interacts with low-level kernel parameters, systemd units, hardware scaling governors, and core `/etc/` configuration files.
+>
+> **Please read and understand this disclaimer prior to using the application:**
+> 1. **USE STRICTLY AT YOUR OWN RISK**: The software is provided "as is", without warranty of any kind, express or implied.
+> 2. **NO LIABILITY**: Under no legal theory (contract, tort, negligence, or otherwise) shall the authors, maintainers, or contributors be liable for any damages, data loss, operating system unbootability, kernel panics, package manager issues, desktop environment crashes, or system downtime arising from the operation of this software.
+> 3. **INDEPENDENT BACKUP REQUIREMENT**: Although ConfTune FC automatically generates configuration snapshots with JSON manifests prior to applying changes, **automated snapshots do not replace an external, independent backup strategy**. Maintain full backups of your system and critical configurations prior to executing non-dry-run operations.
+> 4. **USER RESPONSIBILITY**: It is the user's sole responsibility to inspect candidate parameters and profile diffs presented during dry-run simulations before approving system tuning or service changes.
+
+---
+
 ## 🔒 Core Safety Principles
 
 1. **Non-Destructive Defaults**:

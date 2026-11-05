@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.3
+Version:        1.0.4
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,11 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.4-1
+- Add beta status disclaimers and caution banners matching confclean-fc
+- Add GUI header beta indicator pill and overview dashboard safety notice
+- Include [BETA] tag in CLI system performance status banner
+
 * Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.3-1
 - Fix label and text background blending so text widgets render with transparent backgrounds over cards, header bar, and dialogs
 

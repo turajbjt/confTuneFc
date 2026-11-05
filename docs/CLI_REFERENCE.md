@@ -4,6 +4,11 @@ ConfTune FC includes a headless CLI designed for automated deployments, containe
 
 ---
 
+> ### ⚠️ BETA SOFTWARE WARNING & DISCLAIMER
+> ConfTune FC is **BETA** software. Executing commands with `--apply` will commit real modifications to `/etc/` and `/sys/`. **Use entirely at your own risk.** Always run operations in default simulation mode first to inspect the dry-run output, and verify that you maintain independent backups before applying changes.
+
+---
+
 ## 🚀 Basic Syntax
 
 ```bash

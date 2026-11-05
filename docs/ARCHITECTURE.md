@@ -2,6 +2,8 @@
 
 ConfTune FC is engineered to provide safe, deterministic, and workload-tailored system tuning across modern RPM distributions. This document outlines the internal architecture, threading model, subsystem components, and configuration lifecycle.
 
+> **Development Status**: ConfTune FC is currently in **BETA**. Architectural components, interfaces, kernel parameter boundaries, and safety patterns are actively maintained and hardened against system edge cases.
+
 ---
 
 ## 🏗️ High-Level System Architecture

@@ -54,13 +54,13 @@ Using the automated build script in the repository:
 ./packaging/build-rpm.sh
 ```
 This produces:
-- `dist/conftune-fc-1.0.3-1.src.rpm` (Source RPM)
-- `dist/conftune-fc-1.0.3-1.noarch.rpm` (Local binary RPM)
+- `dist/conftune-fc-1.0.4-1.src.rpm` (Source RPM)
+- `dist/conftune-fc-1.0.4-1.noarch.rpm` (Local binary RPM)
 - `dist/SHA256SUMS` (Integrity checksums)
 
 ### Step 2: Submit the Build to COPR
 ```bash
-copr-cli build conftune-fc dist/conftune-fc-1.0.3-1.src.rpm
+copr-cli build conftune-fc dist/conftune-fc-1.0.4-1.src.rpm
 ```
 You can monitor the build status in real-time:
 ```bash

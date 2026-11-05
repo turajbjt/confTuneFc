@@ -51,6 +51,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.4" date="2026-11-05">
+      <description>
+        <p>Beta release notices and alignment with ConfClean FC:</p>
+        <ul>
+          <li>Added beta software caution disclaimers, liability terms, and backup guidance</li>
+          <li>Added amber BETA pill indicator to GUI top header bar</li>
+          <li>Added safety notice card to the System Dashboard &amp; Overview view</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.3" date="2026-11-05">
       <description>
         <p>UI visual polish release:</p>

@@ -142,6 +142,13 @@ class MainWindow(QMainWindow):
         version_badge.setStyleSheet("color: #787878; font-size: 11px; margin-left: 4px;")
         h_layout.addWidget(version_badge)
 
+        beta_badge = QLabel("BETA")
+        beta_badge.setStyleSheet(
+            "background-color: #e66100; color: #ffffff; font-size: 10px; font-weight: bold; "
+            "border-radius: 4px; padding: 2px 6px; margin-left: 6px;"
+        )
+        h_layout.addWidget(beta_badge)
+
         h_layout.addStretch()
 
         # Mode Badge (Root vs User)
