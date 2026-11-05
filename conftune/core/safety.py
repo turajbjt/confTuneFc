@@ -14,11 +14,18 @@ class SafetyEngine:
 
     def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
+        self._is_root_override: Optional[bool] = None
 
     @property
     def is_root(self) -> bool:
         """Return True if running under root (UID 0)."""
+        if self._is_root_override is not None:
+            return self._is_root_override
         return os.geteuid() == 0
+
+    @is_root.setter
+    def is_root(self, value: Optional[bool]) -> None:
+        self._is_root_override = value
 
     @property
     def has_pkexec(self) -> bool:

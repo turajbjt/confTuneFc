@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.power_tuner import PowerTuner
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 
 
 class PowerTab(QWidget):
@@ -73,11 +74,12 @@ class PowerTab(QWidget):
 
         lbl_set_g = QLabel("Set Governor:")
         self.combo_gov = QComboBox()
-        btn_set_gov = QPushButton("Apply Governor")
-        btn_set_gov.clicked.connect(self._apply_governor)
+        gov_btn_lbl = "Apply Governor" if self.safety.is_root else "🔒 Apply Governor (Requires Root)"
+        self.btn_set_gov = QPushButton(gov_btn_lbl)
+        self.btn_set_gov.clicked.connect(self._apply_governor)
         h_gc.addWidget(lbl_set_g)
         h_gc.addWidget(self.combo_gov)
-        h_gc.addWidget(btn_set_gov)
+        h_gc.addWidget(self.btn_set_gov)
         g_lay.addLayout(h_gc)
         layout.addWidget(gov_card)
 
@@ -105,11 +107,12 @@ class PowerTab(QWidget):
         lbl_set_e = QLabel("Set EPP Mode:")
         self.combo_epp = QComboBox()
         self.combo_epp.addItems(["performance", "balance_performance", "balance_power", "power"])
-        btn_set_epp = QPushButton("Apply EPP Mode")
-        btn_set_epp.clicked.connect(self._apply_epp)
+        epp_btn_lbl = "Apply EPP Mode" if self.safety.is_root else "🔒 Apply EPP Mode (Requires Root)"
+        self.btn_set_epp = QPushButton(epp_btn_lbl)
+        self.btn_set_epp.clicked.connect(self._apply_epp)
         h_ec.addWidget(lbl_set_e)
         h_ec.addWidget(self.combo_epp)
-        h_ec.addWidget(btn_set_epp)
+        h_ec.addWidget(self.btn_set_epp)
         e_lay.addLayout(h_ec)
         layout.addWidget(epp_card)
 
@@ -137,11 +140,12 @@ class PowerTab(QWidget):
         lbl_set_t = QLabel("Set THP Mode:")
         self.combo_thp = QComboBox()
         self.combo_thp.addItems(["always", "madvise", "never"])
-        btn_set_thp = QPushButton("Apply THP")
-        btn_set_thp.clicked.connect(self._apply_thp)
+        thp_btn_lbl = "Apply THP" if self.safety.is_root else "🔒 Apply THP (Requires Root)"
+        self.btn_set_thp = QPushButton(thp_btn_lbl)
+        self.btn_set_thp.clicked.connect(self._apply_thp)
         h_tc.addWidget(lbl_set_t)
         h_tc.addWidget(self.combo_thp)
-        h_tc.addWidget(btn_set_thp)
+        h_tc.addWidget(self.btn_set_thp)
         t_lay.addLayout(h_tc)
         layout.addWidget(thp_card)
 
@@ -174,25 +178,28 @@ class PowerTab(QWidget):
             self.combo_thp.setCurrentText(thp.get("active"))
 
     def _apply_governor(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply CPU Frequency Scaling Governor")
+            return
         gov = self.combo_gov.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.power_tuner.set_governor_all_cores(gov)
-        title = "Simulation Results" if dry_run else "Governor Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Governor Applied", msg)
         self._refresh()
 
     def _apply_epp(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply CPU Energy Performance Preference")
+            return
         epp = self.combo_epp.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.power_tuner.set_epp_all_cores(epp)
-        title = "Simulation Results" if dry_run else "EPP Mode Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "EPP Mode Applied", msg)
         self._refresh()
 
     def _apply_thp(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply Transparent Huge Pages Mode")
+            return
         thp_mode = self.combo_thp.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.power_tuner.set_thp_mode(thp_mode)
-        title = "Simulation Results" if dry_run else "THP Mode Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "THP Mode Applied", msg)
         self._refresh()

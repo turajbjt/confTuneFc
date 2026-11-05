@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.process_tuner import ProcessTuner
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 
 
 class ProcessTab(QWidget):
@@ -86,14 +87,15 @@ class ProcessTab(QWidget):
         self.combo_swap.addItems(["80%", "90%", "95%"])
         self.combo_swap.setCurrentText("90%")
 
-        btn_apply_oomd = QPushButton("Apply oomd Limits")
-        btn_apply_oomd.clicked.connect(self._apply_oomd)
+        oomd_btn_lbl = "Apply oomd Limits" if self.safety.is_root else "🔒 Apply oomd Limits (Requires Root)"
+        self.btn_apply_oomd = QPushButton(oomd_btn_lbl)
+        self.btn_apply_oomd.clicked.connect(self._apply_oomd)
 
         h_oc.addWidget(lbl_press)
         h_oc.addWidget(self.combo_press)
         h_oc.addWidget(lbl_swap)
         h_oc.addWidget(self.combo_swap)
-        h_oc.addWidget(btn_apply_oomd)
+        h_oc.addWidget(self.btn_apply_oomd)
         h_oc.addStretch()
         o_lay.addLayout(h_oc)
         layout.addWidget(oomd_card)
@@ -129,15 +131,16 @@ class ProcessTab(QWidget):
         self.spin_score.setValue(-500)
         self.spin_score.setFixedWidth(90)
 
-        btn_protect = QPushButton("🛡️ Protect Process")
-        btn_protect.setProperty("class", "primary")
-        btn_protect.clicked.connect(self._protect_process)
+        protect_btn_lbl = "🛡️ Protect Process" if self.safety.is_root else "🔒 Protect Process (Requires Root)"
+        self.btn_protect = QPushButton(protect_btn_lbl)
+        self.btn_protect.setProperty("class", "primary")
+        self.btn_protect.clicked.connect(self._protect_process)
 
         h_pc.addWidget(lbl_pn)
         h_pc.addWidget(self.txt_pname)
         h_pc.addWidget(lbl_adj)
         h_pc.addWidget(self.spin_score)
-        h_pc.addWidget(btn_protect)
+        h_pc.addWidget(self.btn_protect)
         h_pc.addStretch()
         p_lay.addLayout(h_pc)
         layout.addWidget(proc_card)
@@ -155,20 +158,22 @@ class ProcessTab(QWidget):
             self.combo_press.setCurrentText(p_val)
 
     def _apply_oomd(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply systemd-oomd Memory Pressure Limits")
+            return
         press = self.combo_press.currentText()
         swap = self.combo_swap.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.process_tuner.configure_oomd_limits(press, swap)
-        title = "Simulation Results" if dry_run else "oomd Limits Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "oomd Limits Applied", msg)
 
     def _protect_process(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Adjust Process OOM Killer Score")
+            return
         pname = self.txt_pname.text().strip()
         if not pname:
             QMessageBox.warning(self, "Input Required", "Please enter a process name.")
             return
 
-        dry_run = not self.safety.is_root
         ok, msg = self.process_tuner.protect_process_by_name(pname, self.spin_score.value())
-        title = "Simulation Results" if dry_run else "OOM Score Adjusted"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "OOM Score Adjusted", msg)

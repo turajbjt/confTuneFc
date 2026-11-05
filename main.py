@@ -19,52 +19,58 @@ def main():
         description="ConfTune FC - System setup, configuration and performance tuner for Fedora, Rocky Linux, and CentOS.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
+Privilege Models:
+  [User Safe]    Can be executed by any casual user without elevation (read-only audits, simulations, font/desktop tweaks, export).
+  [Requires Sudo] Modifies protected kernel, systemd, or /etc/ files. Requires root or sudo privileges.
+
 Examples:
-  python3 main.py                               # Launch graphical interface (default)
-  python3 main.py --status                      # View hardware specs, role & performance score
-  python3 main.py --list-profiles               # List available tuning profiles
-  python3 main.py --profile workstation         # Simulate Fedora desktop optimization (dry-run)
-  python3 main.py --profile server --apply      # Apply Enterprise Server tuning permanently
-  python3 main.py --tune-dnf --apply            # Optimize DNF parallel downloads & fastest mirrors
-  python3 main.py --tune-containers --apply     # Configure Docker/Podman bridge network & inotify
-  python3 main.py --tune-virt --apply           # Configure KVM/Libvirt hypervisor & KSM
-  python3 main.py --tune-virtualmin --apply     # Optimize Virtualmin / Webmin hosting stack
-  python3 main.py --trim                        # Trigger immediate SSD/NVMe filesystem TRIM
-  python3 main.py --snapshots                   # List all pre-tune configuration snapshots
-  python3 main.py --rollback <SNAPSHOT_ID>      # Restore original files from a snapshot
+  python3 main.py                               # Launch graphical interface (user-safe view, elevates via pkexec when needed)
+  python3 main.py --status                      # View hardware specs, role & status [User Safe]
+  python3 main.py --list-profiles               # List available tuning profiles [User Safe]
+  python3 main.py --profile workstation         # Simulate Fedora desktop optimization [User Safe / Dry-run]
+  sudo python3 main.py --profile server --apply # Apply Enterprise Server tuning permanently [Requires Sudo]
+  sudo python3 main.py --tune-dnf --apply       # Optimize DNF parallel downloads & fastest mirrors [Requires Sudo]
+  sudo python3 main.py --tune-containers --apply# Configure Docker/Podman bridge network & inotify [Requires Sudo]
+  sudo python3 main.py --tune-virt --apply      # Configure KVM/Libvirt hypervisor & KSM [Requires Sudo]
+  sudo python3 main.py --tune-virtualmin --apply# Optimize Virtualmin / Webmin hosting stack [Requires Sudo]
+  sudo python3 main.py --trim                   # Trigger immediate SSD/NVMe filesystem TRIM [Requires Sudo]
+  python3 main.py --snapshots                   # List all pre-tune configuration snapshots [User Safe]
+  sudo python3 main.py --rollback <SNAPSHOT_ID> # Restore original files from a snapshot [Requires Sudo]
+  python3 main.py --fedy-fonts                  # Configure crisp font rendering in user ~/.config [User Safe]
+  sudo python3 main.py --fedy-codecs            # Install RPM Fusion and system multimedia codecs [Requires Sudo]
         """,
     )
 
     parser.add_argument("--gui", action="store_true", help="Launch the graphical interface (default if display server detected)")
     parser.add_argument("--elevated-child", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--status", action="store_true", help="Print system summary and tuning readiness")
-    parser.add_argument("--list-profiles", action="store_true", help="List all available tuning presets")
-    parser.add_argument("--profile", metavar="NAME", help="Apply a tuning profile (e.g. workstation, gaming, server, web_server, database, container_host, virtualization_host, virtualmin)")
-    parser.add_argument("--tune-dnf", action="store_true", help="Optimize /etc/dnf/dnf.conf with parallel downloads and fastest mirrors")
-    parser.add_argument("--tune-containers", action="store_true", help="Set up kernel modules and sysctls for Docker & Podman")
-    parser.add_argument("--tune-virt", action="store_true", help="Set up KVM/Libvirt host profile and memory deduplication (KSM)")
-    parser.add_argument("--tune-virtualmin", action="store_true", help="Configure Virtualmin / Webmin hosting stack and firewall")
-    parser.add_argument("--trim", action="store_true", help="Run filesystem TRIM across all SSD/NVMe drives")
-    parser.add_argument("--snapshots", action="store_true", help="List all past configuration snapshots")
-    parser.add_argument("--rollback", metavar="ID", help="Roll back system configuration to a specified snapshot ID")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="Simulate tuning changes without writing files")
-    parser.add_argument("--apply", action="store_true", default=False, help="Commit actual changes to system files (disables dry-run)")
-    parser.add_argument("--fedy-codecs", action="store_true", help="Install RPM Fusion Free/Nonfree and multimedia codecs (VA-API, FFmpeg, GStreamer)")
-    parser.add_argument("--fedy-fonts", action="store_true", help="Configure optimized subpixel RGB antialiasing and font rendering")
-    parser.add_argument("--governor", metavar="GOV", help="Set CPU scaling governor (performance, powersave, schedutil, ondemand)")
-    parser.add_argument("--epp", metavar="MODE", help="Set CPU EPP mode (performance, balance_performance, balance_power, power)")
-    parser.add_argument("--thp", metavar="MODE", help="Set Transparent Huge Pages (always, madvise, never)")
-    parser.add_argument("--protect-process", metavar="NAME", help="Adjust OOM killer score to protect process from termination")
+    parser.add_argument("--status", action="store_true", help="[User Safe] Print system summary and tuning readiness")
+    parser.add_argument("--list-profiles", action="store_true", help="[User Safe] List all available tuning presets")
+    parser.add_argument("--profile", metavar="NAME", help="Simulate or apply a tuning profile [Requires Sudo with --apply]")
+    parser.add_argument("--tune-dnf", action="store_true", help="Optimize /etc/dnf/dnf.conf with parallel downloads and fastest mirrors [Requires Sudo with --apply]")
+    parser.add_argument("--tune-containers", action="store_true", help="Set up kernel modules and sysctls for Docker & Podman [Requires Sudo with --apply]")
+    parser.add_argument("--tune-virt", action="store_true", help="Set up KVM/Libvirt host profile and memory deduplication (KSM) [Requires Sudo with --apply]")
+    parser.add_argument("--tune-virtualmin", action="store_true", help="Configure Virtualmin / Webmin hosting stack and firewall [Requires Sudo with --apply]")
+    parser.add_argument("--trim", action="store_true", help="[Requires Sudo] Run filesystem TRIM across all SSD/NVMe drives")
+    parser.add_argument("--snapshots", action="store_true", help="[User Safe] List all past configuration snapshots")
+    parser.add_argument("--rollback", metavar="ID", help="[Requires Sudo] Roll back system configuration to a specified snapshot ID")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="[User Safe] Force simulation mode without writing files")
+    parser.add_argument("--apply", action="store_true", default=False, help="[Requires Sudo] Commit actual changes to system files (disables dry-run)")
+    parser.add_argument("--fedy-codecs", action="store_true", help="[Requires Sudo] Install RPM Fusion Free/Nonfree and multimedia codecs (VA-API, FFmpeg, GStreamer)")
+    parser.add_argument("--fedy-fonts", action="store_true", help="[User Safe] Configure optimized subpixel RGB antialiasing and font rendering")
+    parser.add_argument("--governor", metavar="GOV", help="[Requires Sudo] Set CPU scaling governor (performance, powersave, schedutil, ondemand)")
+    parser.add_argument("--epp", metavar="MODE", help="[Requires Sudo] Set CPU EPP mode (performance, balance_performance, balance_power, power)")
+    parser.add_argument("--thp", metavar="MODE", help="[Requires Sudo] Set Transparent Huge Pages (always, madvise, never)")
+    parser.add_argument("--protect-process", metavar="NAME", help="[Requires Sudo] Adjust OOM killer score to protect process from termination")
     parser.add_argument("--oom-score", type=int, default=-500, help="OOM score adjustment (-1000 to 1000, default -500)")
-    parser.add_argument("--tune-oomd", action="store_true", help="Configure systemd-oomd memory pressure and swap thresholds")
-    parser.add_argument("--disable-telemetry", action="store_true", help="Disable GNOME metrics, problem reporting, and telemetry")
-    parser.add_argument("--list-autostart", action="store_true", help="List all user and system login autostart applications")
-    parser.add_argument("--drive-health", action="store_true", help="Query storage device SMART and NVMe health status")
-    parser.add_argument("--export-preset", metavar="FILE", help="Export active host tuning into a portable .conftune.tar.gz preset archive")
-    parser.add_argument("--import-preset", metavar="FILE", help="Import and apply a .conftune.tar.gz preset archive (dry-run by default unless --apply)")
-    parser.add_argument("--export-deploy-script", metavar="FILE", help="Generate standalone 1-file deploy.sh script for remote servers")
-    parser.add_argument("--export-kickstart", metavar="FILE", help="Generate an automated Anaconda Kickstart (.ks) file for OS installations")
-    parser.add_argument("--build-iso", action="store_true", help="Inject Kickstart into bootable ISO image using mkksiso")
+    parser.add_argument("--tune-oomd", action="store_true", help="Configure systemd-oomd memory pressure and swap thresholds [Requires Sudo with --apply]")
+    parser.add_argument("--disable-telemetry", action="store_true", help="[User Safe] Disable GNOME metrics, problem reporting, and telemetry")
+    parser.add_argument("--list-autostart", action="store_true", help="[User Safe] List all user and system login autostart applications")
+    parser.add_argument("--drive-health", action="store_true", help="[User Safe] Query storage device SMART and NVMe health status")
+    parser.add_argument("--export-preset", metavar="FILE", help="[User Safe] Export active host tuning into a portable .conftune.tar.gz preset archive")
+    parser.add_argument("--import-preset", metavar="FILE", help="Import and apply a .conftune.tar.gz preset archive [Requires Sudo with --apply]")
+    parser.add_argument("--export-deploy-script", metavar="FILE", help="[User Safe] Generate standalone 1-file deploy.sh script for remote servers")
+    parser.add_argument("--export-kickstart", metavar="FILE", help="[User Safe] Generate an automated Anaconda Kickstart (.ks) file for OS installations")
+    parser.add_argument("--build-iso", action="store_true", help="[User Safe] Inject Kickstart into bootable ISO image using mkksiso")
     parser.add_argument("--base-iso", metavar="ISO", help="Path to base Fedora/Rocky/CentOS ISO image for --build-iso")
     parser.add_argument("--output-iso", metavar="ISO", help="Output path for automated custom ISO image for --build-iso")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose debug logging")

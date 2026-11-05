@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.safety import SafetyEngine
 from conftune.core.storage_tuner import StorageTuner
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -65,12 +66,14 @@ class StorageTab(QWidget):
         t_lay.addWidget(self.lbl_trim_status)
 
         h_tb = QHBoxLayout()
-        self.btn_enable_trim = QPushButton("⏱️ Enable Weekly TRIM Timer")
+        trim_lbl = "⏱️ Enable Weekly TRIM Timer" if self.safety.is_root else "🔒 Enable Weekly TRIM Timer (Requires Root)"
+        self.btn_enable_trim = QPushButton(trim_lbl)
         self.btn_enable_trim.setProperty("class", "primary")
         self.btn_enable_trim.clicked.connect(self._enable_trim)
         h_tb.addWidget(self.btn_enable_trim)
 
-        self.btn_run_trim = QPushButton("🧹 Run TRIM Discard Now")
+        run_lbl = "🧹 Run TRIM Discard Now" if self.safety.is_root else "🔒 Run TRIM Discard Now (Requires Root)"
+        self.btn_run_trim = QPushButton(run_lbl)
         self.btn_run_trim.clicked.connect(self._run_trim_now)
         h_tb.addWidget(self.btn_run_trim)
         h_tb.addStretch()
@@ -106,9 +109,10 @@ class StorageTab(QWidget):
         z_lay.addWidget(lbl_z_desc)
 
         h_zb = QHBoxLayout()
-        btn_apply_zram = QPushButton("⚡ Configure Optimized ZRAM")
-        btn_apply_zram.clicked.connect(self._configure_zram)
-        h_zb.addWidget(btn_apply_zram)
+        zram_lbl = "⚡ Configure Optimized ZRAM" if self.safety.is_root else "🔒 Configure Optimized ZRAM (Requires Root)"
+        self.btn_apply_zram = QPushButton(zram_lbl)
+        self.btn_apply_zram.clicked.connect(self._configure_zram)
+        h_zb.addWidget(self.btn_apply_zram)
         h_zb.addStretch()
         z_lay.addLayout(h_zb)
 
@@ -136,13 +140,17 @@ class StorageTab(QWidget):
             self.table_sched.setItem(row, 2, it_avail)
 
     def _enable_trim(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Enable Weekly TRIM Timer (fstrim.timer)")
+            return
         ok, msg = self.storage_tuner.enable_fstrim_timer()
-        title = "Simulation Results" if dry_run else "fstrim.timer Enabled"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "fstrim.timer Enabled", msg)
         self._refresh()
 
     def _run_trim_now(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Run TRIM Discard Across All Block Devices")
+            return
         self.btn_run_trim.setEnabled(False)
 
         def task():
@@ -155,7 +163,8 @@ class StorageTab(QWidget):
         run_async_task(task, on_done)
 
     def _configure_zram(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Configure ZRAM Compressed Swap Engine")
+            return
         ok, msg = self.storage_tuner.configure_zram()
-        title = "Simulation Results" if dry_run else "ZRAM Configured"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "ZRAM Configured", msg)

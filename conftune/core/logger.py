@@ -43,7 +43,14 @@ def get_log_dir() -> str:
         log_dir = "/var/log/conftune"
     else:
         log_dir = os.path.expanduser("~/.local/share/conftune/logs")
-    os.makedirs(log_dir, exist_ok=True)
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+    except Exception:
+        log_dir = "/tmp/conftune/logs"
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+        except Exception:
+            pass
     return log_dir
 
 

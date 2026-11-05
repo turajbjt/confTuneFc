@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.safety import SafetyEngine
 from conftune.core.server_tuner import ServerTuner
+from conftune.gui.auth import prompt_root_required
 
 
 class ServerTab(QWidget):
@@ -68,11 +69,12 @@ class ServerTab(QWidget):
 
         lbl_sw = QLabel("Switch Profile:")
         self.combo_tuned = QComboBox()
-        btn_switch = QPushButton("Switch Profile")
-        btn_switch.clicked.connect(self._switch_tuned_profile)
+        sw_btn_lbl = "Switch Profile" if self.safety.is_root else "🔒 Switch Profile (Requires Root)"
+        self.btn_switch = QPushButton(sw_btn_lbl)
+        self.btn_switch.clicked.connect(self._switch_tuned_profile)
         h_ts.addWidget(lbl_sw)
         h_ts.addWidget(self.combo_tuned)
-        h_ts.addWidget(btn_switch)
+        h_ts.addWidget(self.btn_switch)
         t_lay.addLayout(h_ts)
 
         layout.addWidget(tuned_card)
@@ -150,11 +152,12 @@ class ServerTab(QWidget):
             self.table_ssh.setItem(row, 3, it_st)
 
     def _switch_tuned_profile(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Switch Red Hat Tuned Profile")
+            return
         new_prof = self.combo_tuned.currentText()
         if not new_prof:
             return
-        dry_run = not self.safety.is_root
         ok, msg = self.server_tuner.set_tuned_profile(new_prof)
-        title = "Simulation Results" if dry_run else "Tuned Profile Switched"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Tuned Profile Switched", msg)
         self._refresh()

@@ -28,7 +28,11 @@ class BackupManager:
         try:
             os.makedirs(self.base_dir, exist_ok=True)
         except Exception as e:
-            self.logger.warning(f"Could not initialize backup directory {self.base_dir}: {e}")
+            self.base_dir = "/tmp/conftune/backups"
+            try:
+                os.makedirs(self.base_dir, exist_ok=True)
+            except Exception:
+                self.logger.warning(f"Could not initialize backup directory {self.base_dir}: {e}")
 
     def create_snapshot(
         self, profile_name: str, target_paths: List[str], notes: str = "", dry_run: bool = False

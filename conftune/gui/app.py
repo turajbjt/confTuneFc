@@ -146,16 +146,18 @@ class MainWindow(QMainWindow):
         # Mode Badge (Root vs User)
         is_root = (os.geteuid() == 0)
         user_name = os.environ.get("USER", "root" if is_root else "user")
-        mode_pill = QLabel(f"Mode: {'Root (System Administrator)' if is_root else f'User ({user_name})'}")
         if is_root:
+            mode_pill = QLabel("🛡️ Mode: Root (System Administrator)")
             mode_pill.setObjectName("pill_root")
         else:
+            mode_pill = QLabel(f"🔒 Mode: User ({user_name}) - System Writes Locked")
             mode_pill.setObjectName("pill_badge")
         h_layout.addWidget(mode_pill)
 
         # Elevate Button if running unprivileged
         if not is_root and self.safety.has_pkexec:
             self.btn_elevate = QPushButton("🛡️ Elevate (pkexec)")
+            self.btn_elevate.setProperty("class", "primary")
             self.btn_elevate.clicked.connect(self._elevate_root)
             h_layout.addWidget(self.btn_elevate)
 

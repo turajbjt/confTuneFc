@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.autostart_tuner import AutostartTuner
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 
 
 class AutostartTab(QWidget):
@@ -86,10 +87,11 @@ class AutostartTab(QWidget):
         self.combo_cd = QComboBox()
         self.combo_cd.addItems(["50M", "100M", "200M", "500M", "1G"])
         self.combo_cd.setCurrentText("200M")
-        btn_apply_cd = QPushButton("Apply Ceiling")
-        btn_apply_cd.clicked.connect(self._apply_coredump)
+        cd_btn_lbl = "Apply Ceiling" if self.safety.is_root else "🔒 Apply Ceiling (Requires Root)"
+        self.btn_apply_cd = QPushButton(cd_btn_lbl)
+        self.btn_apply_cd.clicked.connect(self._apply_coredump)
         h_cdc.addWidget(self.combo_cd)
-        h_cdc.addWidget(btn_apply_cd)
+        h_cdc.addWidget(self.btn_apply_cd)
         cd_lay.addLayout(h_cdc)
         h_util.addWidget(cd_card)
 
@@ -102,7 +104,8 @@ class AutostartTab(QWidget):
         ab_lay.addWidget(lbl_ab)
 
         h_abc = QHBoxLayout()
-        self.btn_toggle_abrt = QPushButton("Disable ABRT Daemons")
+        abrt_btn_lbl = "Disable ABRT Daemons" if self.safety.is_root else "🔒 Disable ABRT Daemons (Requires Root)"
+        self.btn_toggle_abrt = QPushButton(abrt_btn_lbl)
         self.btn_toggle_abrt.clicked.connect(self._toggle_abrt)
         h_abc.addWidget(self.btn_toggle_abrt)
         ab_lay.addLayout(h_abc)
@@ -119,26 +122,36 @@ class AutostartTab(QWidget):
             self.table_auto.setItem(row, 1, QTableWidgetItem(e["scope"].capitalize()))
             self.table_auto.setItem(row, 2, QTableWidgetItem(e["exec"]))
 
-            btn_tog = QPushButton("Disable" if e["enabled"] else "Enable")
+            is_system = e.get("scope") == "system" or str(e.get("path", "")).startswith("/etc/")
+            btn_txt = "Disable" if e["enabled"] else "Enable"
+            if is_system and not self.safety.is_root:
+                btn_txt = f"🔒 {btn_txt} (Root)"
+
+            btn_tog = QPushButton(btn_txt)
             if e["enabled"]:
                 btn_tog.setProperty("class", "destructive")
             btn_tog.clicked.connect(lambda ch, p=e["path"], en=e["enabled"]: self._toggle_entry(p, not en))
             self.table_auto.setCellWidget(row, 3, btn_tog)
 
     def _toggle_entry(self, path: str, enable: bool):
+        if path.startswith("/etc/") and not self.safety.is_root:
+            prompt_root_required(self, f"{'Enable' if enable else 'Disable'} System Autostart Application")
+            return
         ok, msg = self.autostart_tuner.toggle_autostart_entry(path, enable)
         QMessageBox.information(self, "Autostart Updated", msg)
         self._refresh()
 
     def _apply_coredump(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Configure systemd-coredump Storage Ceiling")
+            return
         val = self.combo_cd.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.autostart_tuner.configure_coredump_limit(val)
-        title = "Simulation Results" if dry_run else "Core Dump Limit Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Core Dump Limit Applied", msg)
 
     def _toggle_abrt(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Manage ABRT Bug Reporting Daemons")
+            return
         ok, msg = self.autostart_tuner.toggle_abrt_services(False)
-        title = "Simulation Results" if dry_run else "ABRT Daemons Updated"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "ABRT Daemons Updated", msg)

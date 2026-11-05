@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.preset_manager import PresetManager
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -116,7 +117,8 @@ class PresetsTab(QWidget):
         btn_browse_imp.clicked.connect(self._select_import_file)
         h_i_btn.addWidget(btn_browse_imp)
 
-        self.btn_apply_preset = QPushButton("🚀 Apply Imported Preset")
+        apply_lbl = "🚀 Apply Imported Preset" if self.safety.is_root else "🔒 Apply Imported Preset (Requires Root)"
+        self.btn_apply_preset = QPushButton(apply_lbl)
         self.btn_apply_preset.setProperty("class", "primary")
         self.btn_apply_preset.setEnabled(False)
         self.btn_apply_preset.clicked.connect(self._apply_loaded_preset)
@@ -242,6 +244,10 @@ class PresetsTab(QWidget):
         if not self.loaded_preset_data:
             return
 
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply External Preset to System Host")
+            return
+
         dry_run = not self.safety.is_root
         old_dry = self.preset_mgr.safety.dry_run
         self.preset_mgr.safety.dry_run = dry_run
@@ -249,8 +255,7 @@ class PresetsTab(QWidget):
         ok, msg = self.preset_mgr.apply_preset(self.loaded_preset_data)
         self.preset_mgr.safety.dry_run = old_dry
 
-        title = "Simulation Results" if dry_run else "Preset Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Preset Applied", msg)
 
     def _generate_deploy_script(self):
         preset = self.loaded_preset_data or self.preset_mgr.capture_current_settings(name="Host Tuning")

@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.backup_manager import BackupManager
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 
 
 class BackupsTab(QWidget):
@@ -56,7 +57,8 @@ class BackupsTab(QWidget):
         btn_ref.clicked.connect(self._reload_snapshots)
         h_lay.addWidget(btn_ref)
 
-        self.btn_rollback = QPushButton("⏪ Rollback to Snapshot")
+        roll_lbl = "⏪ Rollback to Snapshot" if self.safety.is_root else "🔒 Rollback to Snapshot (Requires Root)"
+        self.btn_rollback = QPushButton(roll_lbl)
         self.btn_rollback.setProperty("class", "destructive")
         self.btn_rollback.clicked.connect(self._perform_rollback)
         h_lay.addWidget(self.btn_rollback)
@@ -129,6 +131,10 @@ class BackupsTab(QWidget):
             QMessageBox.warning(self, "No Selection", "Please select a snapshot to restore.")
             return
 
+        if not self.safety.is_root:
+            prompt_root_required(self, f"Rollback System Configuration to Snapshot '{self.selected_snap_id}'")
+            return
+
         reply = QMessageBox.question(
             self,
             "Confirm System Rollback",
@@ -139,8 +145,6 @@ class BackupsTab(QWidget):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        dry_run = not self.safety.is_root
-        ok, msg = self.backup_mgr.rollback_snapshot(self.selected_snap_id, dry_run=dry_run)
-        title = "Simulation Results" if dry_run else "Rollback Finished"
-        QMessageBox.information(self, title, msg)
+        ok, msg = self.backup_mgr.rollback_snapshot(self.selected_snap_id, dry_run=False)
+        QMessageBox.information(self, "Rollback Finished", msg)
         self._reload_snapshots()

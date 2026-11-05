@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.safety import SafetyEngine
 from conftune.core.sysctl_tuner import PARAMETER_CATALOG, SysctlTuner
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -66,7 +67,7 @@ class SysctlTab(QWidget):
         btn_refresh.clicked.connect(self._reload_table)
         h_lay.addWidget(btn_refresh)
 
-        self.btn_save = QPushButton("💾 Save Overrides")
+        self.btn_save = QPushButton("💾 Save Overrides" if self.safety.is_root else "🔒 Save Overrides (Requires Root)")
         self.btn_save.setProperty("class", "primary")
         self.btn_save.clicked.connect(self._save_changes)
         h_lay.addWidget(self.btn_save)
@@ -137,8 +138,10 @@ class SysctlTab(QWidget):
             QMessageBox.warning(self, "No Parameters", "No valid parameters to apply.")
             return
 
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Saving kernel sysctl overrides to /etc/sysctl.d/99-conftune.conf")
+            return
+
         ok, msg = self.sysctl_tuner.apply_parameters(params, profile_name="custom_gui")
-        title = "Simulation Results" if dry_run else "Parameters Saved"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Parameters Saved", msg)
         self._reload_table()

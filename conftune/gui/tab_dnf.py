@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.dnf_tuner import DNFTuner
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -88,12 +89,12 @@ class DNFTab(QWidget):
 
         # Buttons
         h_btns = QHBoxLayout()
-        self.btn_apply = QPushButton("🚀 Apply DNF Acceleration")
+        self.btn_apply = QPushButton("🚀 Apply DNF Acceleration" if self.safety.is_root else "🔒 Apply DNF Acceleration (Requires Root)")
         self.btn_apply.setProperty("class", "primary")
         self.btn_apply.clicked.connect(self._apply_dnf)
         h_btns.addWidget(self.btn_apply)
 
-        self.btn_clean = QPushButton("🧹 Purge DNF Metadata & Cache")
+        self.btn_clean = QPushButton("🧹 Purge DNF Metadata & Cache" if self.safety.is_root else "🔒 Purge DNF Cache (Requires Root)")
         self.btn_clean.clicked.connect(self._clean_dnf_cache)
         h_btns.addWidget(self.btn_clean)
         h_btns.addStretch()
@@ -114,16 +115,22 @@ class DNFTab(QWidget):
         self.chk_keepcache.setChecked(curr.get("keepcache", "False").lower() == "true")
 
     def _apply_dnf(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Modifying DNF configuration in /etc/dnf/dnf.conf")
+            return
+
         ok, msg = self.dnf_tuner.apply_optimizations(
             max_parallel_downloads=self.spin_dl.value(),
             fastestmirror=self.chk_fastest.isChecked(),
             defaultyes=self.chk_defaultyes.isChecked(),
             keepcache=self.chk_keepcache.isChecked(),
         )
-        title = "Simulation Results" if dry_run else "DNF Configured"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "DNF Configured", msg)
 
     def _clean_dnf_cache(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Purging system DNF package and metadata cache")
+            return
+
         ok, msg = self.dnf_tuner.clean_cache()
         QMessageBox.information(self, "DNF Cache Clean", msg)

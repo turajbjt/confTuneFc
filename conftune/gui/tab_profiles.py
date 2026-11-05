@@ -25,6 +25,7 @@ from conftune.core.safety import SafetyEngine
 from conftune.core.server_tuner import ServerTuner
 from conftune.core.sysctl_tuner import SysctlTuner
 from conftune.core.systemd_tuner import SystemdTuner
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -75,7 +76,7 @@ class ProfilesTab(QWidget):
         self.btn_apply_dry.clicked.connect(lambda: self._apply_current_profile(dry_run=True))
         h_layout.addWidget(self.btn_apply_dry)
 
-        self.btn_apply = QPushButton("🚀 Apply Profile")
+        self.btn_apply = QPushButton("🚀 Apply Profile" if self.safety.is_root else "🔒 Apply Profile (Requires Root)")
         self.btn_apply.setProperty("class", "primary")
         self.btn_apply.clicked.connect(lambda: self._apply_current_profile(dry_run=False))
         h_layout.addWidget(self.btn_apply)
@@ -203,17 +204,8 @@ class ProfilesTab(QWidget):
             return
 
         if not dry_run and not self.safety.is_root:
-            reply = QMessageBox.question(
-                self,
-                "Authentication / Privilege Required",
-                "Applying tuning changes modifies system files (/etc/sysctl.d, /etc/dnf). "
-                "You are currently running unprivileged.\n\n"
-                "Would you like to run in Simulation (Dry Run) mode first, or cancel?",
-                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-            )
-            if reply != QMessageBox.StandardButton.Ok:
-                return
-            dry_run = True
+            prompt_root_required(self, "Applying this tuning profile to system configuration files")
+            return
 
         self.progress.setVisible(True)
         self.btn_apply.setEnabled(False)

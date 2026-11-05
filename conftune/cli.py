@@ -55,6 +55,26 @@ def run_cli(args: argparse.Namespace) -> None:
     if args.dry_run:
         safety.dry_run = True
 
+    # Root Privilege Guard: Lock away system-modifying operations from unprivileged executions
+    root_write_requested = (
+        (args.apply and any(write_actions))
+        or getattr(args, "trim", False)
+        or bool(getattr(args, "rollback", None))
+        or getattr(args, "fedy_codecs", False)
+        or bool(getattr(args, "governor", None))
+        or bool(getattr(args, "epp", None))
+        or bool(getattr(args, "thp", None))
+        or bool(getattr(args, "protect_process", None))
+    )
+    if root_write_requested and not safety.is_root and not args.dry_run:
+        print("\n[!] Elevation Required: Root or sudo privileges are required for system modifications.", file=sys.stderr)
+        print("    The requested action writes to protected kernel, systemd, or /etc/ configurations.", file=sys.stderr)
+        print("    Please invoke the application with sudo or as root, for example:", file=sys.stderr)
+        invoked_args = " ".join(sys.argv[1:])
+        print(f"        sudo python3 main.py {invoked_args}\n", file=sys.stderr)
+        print("    Tip: You can simulate changes as a normal user without making system writes by adding --dry-run.", file=sys.stderr)
+        sys.exit(1)
+
     backup_mgr = BackupManager()
     detector = SystemDetector()
     sysctl_tuner = SysctlTuner(safety=safety, backup_mgr=backup_mgr)

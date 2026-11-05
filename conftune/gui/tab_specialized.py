@@ -23,6 +23,7 @@ from conftune.core.profiles import get_profile
 from conftune.core.safety import SafetyEngine
 from conftune.core.server_tuner import ServerTuner
 from conftune.core.sysctl_tuner import SysctlTuner
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -118,10 +119,11 @@ class SpecializedTab(QWidget):
         lay.addWidget(lbl_desc)
 
         h_act = QHBoxLayout()
-        btn_opt_vm = QPushButton("⚡ Optimize Virtualmin Hosting Stack")
-        btn_opt_vm.setProperty("class", "primary")
-        btn_opt_vm.clicked.connect(self._optimize_virtualmin)
-        h_act.addWidget(btn_opt_vm)
+        vm_lbl = "⚡ Optimize Virtualmin Hosting Stack" if self.safety.is_root else "🔒 Optimize Virtualmin Hosting Stack (Requires Root)"
+        self.btn_opt_vm = QPushButton(vm_lbl)
+        self.btn_opt_vm.setProperty("class", "primary")
+        self.btn_opt_vm.clicked.connect(self._optimize_virtualmin)
+        h_act.addWidget(self.btn_opt_vm)
         h_act.addStretch()
         lay.addLayout(h_act)
 
@@ -165,10 +167,11 @@ class SpecializedTab(QWidget):
         lay.addWidget(lbl_desc)
 
         h_act = QHBoxLayout()
-        btn_opt_c = QPushButton("⚡ Optimize Container Host Stack")
-        btn_opt_c.setProperty("class", "primary")
-        btn_opt_c.clicked.connect(self._optimize_containers)
-        h_act.addWidget(btn_opt_c)
+        cnt_lbl = "⚡ Optimize Container Host Stack" if self.safety.is_root else "🔒 Optimize Container Host Stack (Requires Root)"
+        self.btn_opt_c = QPushButton(cnt_lbl)
+        self.btn_opt_c.setProperty("class", "primary")
+        self.btn_opt_c.clicked.connect(self._optimize_containers)
+        h_act.addWidget(self.btn_opt_c)
         h_act.addStretch()
         lay.addLayout(h_act)
 
@@ -207,35 +210,39 @@ class SpecializedTab(QWidget):
         lay.addWidget(lbl_desc)
 
         h_act = QHBoxLayout()
-        btn_opt_v = QPushButton("⚡ Optimize Virtualization Hypervisor")
-        btn_opt_v.setProperty("class", "primary")
-        btn_opt_v.clicked.connect(self._optimize_virtualization)
-        h_act.addWidget(btn_opt_v)
+        virt_lbl = "⚡ Optimize Virtualization Hypervisor" if self.safety.is_root else "🔒 Optimize Virtualization Hypervisor (Requires Root)"
+        self.btn_opt_v = QPushButton(virt_lbl)
+        self.btn_opt_v.setProperty("class", "primary")
+        self.btn_opt_v.clicked.connect(self._optimize_virtualization)
+        h_act.addWidget(self.btn_opt_v)
         h_act.addStretch()
         lay.addLayout(h_act)
 
         return card
 
     def _optimize_virtualmin(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Optimize Virtualmin Hosting Stack")
+            return
         ok1, msg1 = self.server_tuner.optimize_virtualmin_stack()
         prof = get_profile("virtualmin")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Virtualmin Hosting")
-        title = "Simulation Results" if dry_run else "Virtualmin Tuning Applied"
-        QMessageBox.information(self, title, f"{msg1}\n\n{msg2}")
+        QMessageBox.information(self, "Virtualmin Tuning Applied", f"{msg1}\n\n{msg2}")
 
     def _optimize_containers(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Optimize Container Host Stack")
+            return
         ok1, msg1 = self.server_tuner.optimize_containers_stack()
         prof = get_profile("container_host")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Container Host")
-        title = "Simulation Results" if dry_run else "Container Host Tuning Applied"
-        QMessageBox.information(self, title, f"{msg1}\n\n{msg2}")
+        QMessageBox.information(self, "Container Host Tuning Applied", f"{msg1}\n\n{msg2}")
 
     def _optimize_virtualization(self):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, "Optimize Virtualization Hypervisor")
+            return
         ok1, msg1 = self.server_tuner.optimize_virtualization_host()
         prof = get_profile("virtualization_host")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Virtualization Host")
-        title = "Simulation Results" if dry_run else "Virtualization Tuning Applied"
-        QMessageBox.information(self, title, f"{msg1}\n\n{msg2}")
+        QMessageBox.information(self, "Virtualization Tuning Applied", f"{msg1}\n\n{msg2}")

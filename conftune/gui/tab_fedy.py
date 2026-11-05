@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.fedy_tuner import FedyTuner
 from conftune.core.safety import SafetyEngine
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.workers import run_async_task
 
 
@@ -72,7 +73,8 @@ class FedyTab(QWidget):
         rf_lay.addWidget(self.lbl_rf_status)
 
         h_rf_btn = QHBoxLayout()
-        self.btn_install_rf = QPushButton("🚀 Enable RPM Fusion Repositories")
+        rf_lbl = "🚀 Enable RPM Fusion Repositories" if self.safety.is_root else "🔒 Enable RPM Fusion Repositories (Requires Root)"
+        self.btn_install_rf = QPushButton(rf_lbl)
         self.btn_install_rf.setProperty("class", "primary")
         self.btn_install_rf.clicked.connect(self._install_rpmfusion)
         h_rf_btn.addWidget(self.btn_install_rf)
@@ -100,7 +102,8 @@ class FedyTab(QWidget):
         mc_lay.addWidget(lbl_mc_desc)
 
         h_mc_btn = QHBoxLayout()
-        self.btn_install_codecs = QPushButton("⚡ Install All Multimedia Codecs")
+        mc_lbl = "⚡ Install All Multimedia Codecs" if self.safety.is_root else "🔒 Install All Multimedia Codecs (Requires Root)"
+        self.btn_install_codecs = QPushButton(mc_lbl)
         self.btn_install_codecs.setProperty("class", "primary")
         self.btn_install_codecs.clicked.connect(self._install_codecs)
         h_mc_btn.addWidget(self.btn_install_codecs)
@@ -179,6 +182,9 @@ class FedyTab(QWidget):
         self.chk_bat.setChecked(gt.get("battery_percent", False))
 
     def _install_rpmfusion(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Enable RPM Fusion Repositories")
+            return
         self.btn_install_rf.setEnabled(False)
 
         def task():
@@ -192,6 +198,9 @@ class FedyTab(QWidget):
         run_async_task(task, on_done)
 
     def _install_codecs(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Install All Multimedia Codecs")
+            return
         self.btn_install_codecs.setEnabled(False)
 
         def task():

@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from conftune.core.safety import SafetyEngine
 from conftune.core.systemd_tuner import SystemdTuner
+from conftune.gui.auth import prompt_root_required
 
 
 class SystemdTab(QWidget):
@@ -58,7 +59,7 @@ class SystemdTab(QWidget):
         self.combo_j = QComboBox()
         self.combo_j.addItems(["200M", "300M", "500M", "1G"])
         self.combo_j.setCurrentText("300M")
-        btn_apply_j = QPushButton("Apply Limit")
+        btn_apply_j = QPushButton("Apply Limit" if self.safety.is_root else "🔒 Apply Limit (Requires Root)")
         btn_apply_j.clicked.connect(self._apply_journald)
         h_j.addWidget(lbl_j)
         h_j.addWidget(self.combo_j)
@@ -118,7 +119,9 @@ class SystemdTab(QWidget):
             it_state = QTableWidgetItem(state_str)
             it_desc = QTableWidgetItem(r["description"])
 
-            btn_toggle = QPushButton("Disable" if r["active"] else "Enable")
+            action_text = "Disable" if r["active"] else "Enable"
+            btn_label = action_text if self.safety.is_root else f"🔒 {action_text} (Root)"
+            btn_toggle = QPushButton(btn_label)
             if r["active"]:
                 btn_toggle.setProperty("class", "destructive")
             btn_toggle.clicked.connect(lambda ch, s=r["service"], act=r["active"]: self._toggle_service(s, not act))
@@ -129,15 +132,19 @@ class SystemdTab(QWidget):
             self.table_rec.setCellWidget(row, 3, btn_toggle)
 
     def _toggle_service(self, service: str, enable: bool):
-        dry_run = not self.safety.is_root
+        if not self.safety.is_root:
+            prompt_root_required(self, f"Modifying system service '{service}'")
+            return
+
         ok, msg = self.systemd_tuner.set_service_state(service, enable)
-        title = "Simulation Results" if dry_run else "Service Updated"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Service Updated", msg)
         self._refresh()
 
     def _apply_journald(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Configuring systemd-journald limits in /etc/systemd/journald.conf.d")
+            return
+
         size = self.combo_j.currentText()
-        dry_run = not self.safety.is_root
         ok, msg = self.systemd_tuner.configure_journald_limit(size)
-        title = "Simulation Results" if dry_run else "Journald Limit Applied"
-        QMessageBox.information(self, title, msg)
+        QMessageBox.information(self, "Journald Limit Applied", msg)
