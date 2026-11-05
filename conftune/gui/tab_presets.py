@@ -158,6 +158,10 @@ class PresetsTab(QWidget):
         btn_gen_sh = QPushButton("⚡ Generate deploy.sh Script")
         btn_gen_sh.clicked.connect(self._generate_deploy_script)
         h_s_btn.addWidget(btn_gen_sh)
+
+        btn_gen_ansible = QPushButton("📋 Generate Ansible Playbook (.yml)")
+        btn_gen_ansible.clicked.connect(self._generate_ansible_playbook)
+        h_s_btn.addWidget(btn_gen_ansible)
         h_s_btn.addStretch()
         s_lay.addLayout(h_s_btn)
         layout.addWidget(sh_card)
@@ -267,6 +271,19 @@ class PresetsTab(QWidget):
         ok, msg = self.preset_mgr.generate_standalone_script(preset, dest_path)
         if ok:
             QMessageBox.information(self, "Script Generated", msg)
+        else:
+            QMessageBox.critical(self, "Generation Error", msg)
+
+    def _generate_ansible_playbook(self):
+        preset = self.loaded_preset_data or self.preset_mgr.capture_current_settings(name="Host Tuning")
+        default_file = os.path.expanduser("~/Desktop/conftune-playbook.yml")
+        dest_path, _ = QFileDialog.getSaveFileName(self, "Save Ansible Playbook", default_file, "Ansible Playbooks (*.yml *.yaml)")
+        if not dest_path:
+            return
+
+        ok, msg = self.preset_mgr.generate_ansible_playbook(preset, dest_path)
+        if ok:
+            QMessageBox.information(self, "Playbook Generated", msg)
         else:
             QMessageBox.critical(self, "Generation Error", msg)
 

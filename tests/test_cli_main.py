@@ -55,6 +55,7 @@ class TestCLIExecution(unittest.TestCase):
             "import_preset": None,
             "export_deploy_script": None,
             "export_kickstart": None,
+            "export_ansible": None,
             "build_iso": False,
             "base_iso": None,
             "output_iso": None,
@@ -268,6 +269,15 @@ class TestCLIExecution(unittest.TestCase):
             run_cli(args_ks)
         self.assertIn("Generating Anaconda Kickstart Configuration", out_ks.getvalue())
         self.assertTrue(os.path.isfile(ks_path))
+
+        # Ansible
+        yml_path = os.path.join(self.test_dir, "playbook.yml")
+        args_yml = self._make_args(export_ansible=yml_path)
+        out_yml = io.StringIO()
+        with patch("sys.stdout", out_yml):
+            run_cli(args_yml)
+        self.assertIn("Generating Ansible Playbook", out_yml.getvalue())
+        self.assertTrue(os.path.isfile(yml_path))
 
     def test_cli_build_iso_missing_arguments(self):
         args = self._make_args(build_iso=True)

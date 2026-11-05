@@ -419,7 +419,117 @@ echo "==> ConfTune FC: Kickstart post-install configuration finished successfull
         except Exception as e:
             return False, f"Failed to generate Kickstart: {e}"
 
-    # --- 4. Inject Kickstart into Bootable ISO with mkksiso ---
+    # --- 4. Generate Ansible Playbook ---
+
+    def generate_ansible_playbook(self, preset_data: Dict[str, Any], output_path: str) -> Tuple[bool, str]:
+        """
+        Generate a self-contained Ansible Playbook (.yml) to automate host tuning across server fleets.
+        """
+        if not output_path.endswith((".yml", ".yaml")):
+            output_path += ".yml"
+
+        sysctl_loop_items = []
+        for k, v in sorted(preset_data.get("sysctl", {}).items()):
+            sysctl_loop_items.append(f"        - {{ key: '{k}', value: '{v}' }}")
+        sysctl_loop_block = "\n".join(sysctl_loop_items) or "        []"
+
+        dnf_cfg = preset_data.get("dnf", {})
+        max_dl = dnf_cfg.get("max_parallel_downloads", 10)
+        fastest = dnf_cfg.get("fastestmirror", "True")
+        defaultyes = dnf_cfg.get("defaultyes", "True")
+        keepcache = dnf_cfg.get("keepcache", "True")
+        journal_max = preset_data.get("journald_max", "300M")
+        tuned_prof = preset_data.get("tuned_profile", "throughput-performance")
+        preset_name = preset_data.get("name", "Host Tuning")
+
+        playbook_content = f"""---
+# ==============================================================================
+# ConfTune FC - Automated System Tuning & Optimization Playbook
+# Preset: {preset_name}
+# Compatible with Fedora 40-45+, Rocky Linux 8-10, CentOS Stream 9-10, and RHEL
+# Copyright (C) BuildDesignCreate.com
+# ==============================================================================
+
+- name: Apply ConfTune FC Performance Tuning ({preset_name})
+  hosts: "{{{{ target_hosts | default('all') }}}}"
+  become: true
+  tasks:
+    - name: Ensure sysctl.d configuration directory exists
+      ansible.builtin.file:
+        path: /etc/sysctl.d
+        state: directory
+        mode: '0755'
+
+    - name: Configure Kernel Sysctl Parameters (/etc/sysctl.d/99-conftune.conf)
+      ansible.posix.sysctl:
+        name: "{{{{ item.key }}}}"
+        value: "{{{{ item.value }}}}"
+        sysctl_file: /etc/sysctl.d/99-conftune.conf
+        state: present
+        reload: true
+      loop:
+{sysctl_loop_block}
+
+    - name: Configure DNF multi-threaded downloads & fastest mirrors
+      community.general.ini_file:
+        path: /etc/dnf/dnf.conf
+        section: main
+        option: "{{{{ item.key }}}}"
+        value: "{{{{ item.value }}}}"
+        mode: '0644'
+        no_extra_spaces: true
+      loop:
+        - {{ key: 'max_parallel_downloads', value: '{max_dl}' }}
+        - {{ key: 'fastestmirror', value: '{fastest}' }}
+        - {{ key: 'defaultyes', value: '{defaultyes}' }}
+        - {{ key: 'keepcache', value: '{keepcache}' }}
+      ignore_errors: true
+
+    - name: Ensure systemd journal configuration directory exists
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Configure systemd-journald disk storage cap
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/99-conftune.conf
+        content: |
+          # ConfTune FC - Journald Optimization
+          [Journal]
+          SystemMaxUse={journal_max}
+          RuntimeMaxUse=100M
+        mode: '0644'
+      notify: Restart systemd-journald
+
+    - name: Apply Red Hat Tuned profile ({tuned_prof})
+      ansible.builtin.command: tuned-adm profile {tuned_prof}
+      changed_when: false
+      failed_when: false
+
+    - name: Enable weekly SSD/NVMe TRIM maintenance timer (fstrim.timer)
+      ansible.builtin.systemd:
+        name: fstrim.timer
+        state: started
+        enabled: true
+      failed_when: false
+
+  handlers:
+    - name: Restart systemd-journald
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted
+"""
+
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(playbook_content)
+            self.logger.info(f"Generated Ansible Playbook: {output_path}")
+            return True, f"Ansible Playbook generated successfully:\n{output_path}\n\nYou can run this across your server fleet with:\n  ansible-playbook -i hosts {os.path.basename(output_path)}"
+        except Exception as e:
+            return False, f"Failed to generate Ansible Playbook: {e}"
+
+    # --- 5. Inject Kickstart into Bootable ISO with mkksiso ---
 
     def build_custom_iso(self, base_iso_path: str, kickstart_path: str, output_iso_path: str) -> Tuple[bool, str]:
         """

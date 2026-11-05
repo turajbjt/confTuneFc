@@ -329,6 +329,15 @@ def run_cli(args: argparse.Namespace) -> None:
         print(f"  {msg}")
         return
 
+    # Preset: Ansible Playbook
+    if getattr(args, "export_ansible", None):
+        out_yml = args.export_ansible
+        print(f"\n==> Generating Ansible Playbook to '{out_yml}'...")
+        current_data = preset_mgr.capture_current_settings(name="Host Tuning")
+        ok, msg = preset_mgr.generate_ansible_playbook(current_data, out_yml)
+        print(f"  {msg}")
+        return
+
     # Preset: Build ISO
     if getattr(args, "build_iso", False):
         base_iso = getattr(args, "base_iso", None)

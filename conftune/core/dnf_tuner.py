@@ -15,6 +15,7 @@ from conftune.core.logger import get_logger
 from conftune.core.safety import SafetyEngine
 
 DNF_CONF_PATH = "/etc/dnf/dnf.conf"
+DNF5_CONF_PATH = "/etc/dnf/dnf5.conf"
 
 
 class DNFTuner:
@@ -26,29 +27,32 @@ class DNFTuner:
         self.backup_mgr = backup_mgr or BackupManager()
 
     def get_current_settings(self) -> Dict[str, Any]:
-        """Read and parse /etc/dnf/dnf.conf."""
+        """Read and parse /etc/dnf/dnf.conf and /etc/dnf/dnf5.conf."""
         settings = {
             "max_parallel_downloads": "3",  # default in standard DNF
             "fastestmirror": "False",
             "defaultyes": "False",
             "keepcache": "False",
             "clean_requirements_on_remove": "True",
-            "exists": os.path.isfile(DNF_CONF_PATH),
+            "exists": os.path.isfile(DNF_CONF_PATH) or os.path.isfile(DNF5_CONF_PATH),
+            "is_dnf5": bool(shutil.which("dnf5") or os.path.isfile(DNF5_CONF_PATH)),
         }
 
-        if not os.path.isfile(DNF_CONF_PATH):
-            return settings
+        # Check primary config paths
+        for conf_file in [DNF_CONF_PATH, DNF5_CONF_PATH]:
+            if not os.path.isfile(conf_file):
+                continue
 
-        try:
-            parser = configparser.ConfigParser()
-            parser.read(DNF_CONF_PATH)
-            section = "main" if parser.has_section("main") else parser.sections()[0] if parser.sections() else None
-            if section:
-                for k in ["max_parallel_downloads", "fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
-                    if parser.has_option(section, k):
-                        settings[k] = parser.get(section, k)
-        except Exception as e:
-            self.logger.warning(f"Error reading {DNF_CONF_PATH}: {e}")
+            try:
+                parser = configparser.ConfigParser()
+                parser.read(conf_file)
+                section = "main" if parser.has_section("main") else parser.sections()[0] if parser.sections() else None
+                if section:
+                    for k in ["max_parallel_downloads", "fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
+                        if parser.has_option(section, k):
+                            settings[k] = parser.get(section, k)
+            except Exception as e:
+                self.logger.warning(f"Error reading {conf_file}: {e}")
 
         return settings
 
@@ -59,46 +63,53 @@ class DNFTuner:
         defaultyes: bool = True,
         keepcache: bool = True,
     ) -> Tuple[bool, str]:
-        """Apply recommended DNF acceleration settings with pre-backup."""
+        """Apply recommended DNF acceleration settings with pre-backup for DNF4 and DNF5."""
         valid, msg = self.safety.verify_privilege("Optimizing DNF configuration")
         if not valid:
             return False, msg
 
+        targets = [DNF_CONF_PATH]
+        if os.path.isfile(DNF5_CONF_PATH) or shutil.which("dnf5"):
+            targets.append(DNF5_CONF_PATH)
+
         # Snapshot before modifying
         self.backup_mgr.create_snapshot(
             profile_name="dnf_optimization",
-            target_paths=[DNF_CONF_PATH],
-            notes="DNF acceleration tweaks",
+            target_paths=targets,
+            notes="DNF acceleration tweaks (DNF4/DNF5)",
             dry_run=self.safety.dry_run,
         )
 
         if self.safety.dry_run:
             self.logger.info(
-                f"[DRY RUN] Would set in {DNF_CONF_PATH}: max_parallel_downloads={max_parallel_downloads}, "
+                f"[DRY RUN] Would set in {', '.join(targets)}: max_parallel_downloads={max_parallel_downloads}, "
                 f"fastestmirror={fastestmirror}, defaultyes={defaultyes}, keepcache={keepcache}"
             )
             return True, "[DRY RUN] DNF configuration simulated successfully."
 
         try:
-            parser = configparser.ConfigParser()
-            if os.path.isfile(DNF_CONF_PATH):
-                parser.read(DNF_CONF_PATH)
+            for conf_file in targets:
+                parser = configparser.ConfigParser()
+                if os.path.isfile(conf_file):
+                    parser.read(conf_file)
 
-            if not parser.has_section("main"):
-                parser.add_section("main")
+                if not parser.has_section("main"):
+                    parser.add_section("main")
 
-            parser.set("main", "max_parallel_downloads", str(max_parallel_downloads))
-            parser.set("main", "fastestmirror", "True" if fastestmirror else "False")
-            parser.set("main", "defaultyes", "True" if defaultyes else "False")
-            parser.set("main", "keepcache", "True" if keepcache else "False")
-            parser.set("main", "clean_requirements_on_remove", "True")
+                parser.set("main", "max_parallel_downloads", str(max_parallel_downloads))
+                parser.set("main", "fastestmirror", "True" if fastestmirror else "False")
+                parser.set("main", "defaultyes", "True" if defaultyes else "False")
+                parser.set("main", "keepcache", "True" if keepcache else "False")
+                parser.set("main", "clean_requirements_on_remove", "True")
 
-            os.makedirs(os.path.dirname(DNF_CONF_PATH), exist_ok=True)
-            with open(DNF_CONF_PATH, "w", encoding="utf-8") as f:
-                parser.write(f)
+                os.makedirs(os.path.dirname(conf_file), exist_ok=True)
+                with open(conf_file, "w", encoding="utf-8") as f:
+                    parser.write(f)
 
-            self.logger.info(f"Successfully tuned DNF configuration in {DNF_CONF_PATH}.")
-            return True, f"DNF acceleration applied: {max_parallel_downloads} concurrent downloads, fastestmirror=True."
+                self.logger.info(f"Successfully tuned DNF configuration in {conf_file}.")
+
+            dnf_version_note = " (DNF4 & DNF5)" if len(targets) > 1 else ""
+            return True, f"DNF acceleration applied{dnf_version_note}: {max_parallel_downloads} concurrent downloads, fastestmirror=True."
 
         except Exception as e:
             err = f"Failed to update DNF configuration: {e}"

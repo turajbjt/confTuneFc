@@ -70,6 +70,7 @@ Examples:
     parser.add_argument("--import-preset", metavar="FILE", help="Import and apply a .conftune.tar.gz preset archive [Requires Sudo with --apply]")
     parser.add_argument("--export-deploy-script", metavar="FILE", help="[User Safe] Generate standalone 1-file deploy.sh script for remote servers")
     parser.add_argument("--export-kickstart", metavar="FILE", help="[User Safe] Generate an automated Anaconda Kickstart (.ks) file for OS installations")
+    parser.add_argument("--export-ansible", metavar="FILE", help="[User Safe] Generate an automated Ansible Playbook (.yml) for fleet management")
     parser.add_argument("--build-iso", action="store_true", help="[User Safe] Inject Kickstart into bootable ISO image using mkksiso")
     parser.add_argument("--base-iso", metavar="ISO", help="Path to base Fedora/Rocky/CentOS ISO image for --build-iso")
     parser.add_argument("--output-iso", metavar="ISO", help="Output path for automated custom ISO image for --build-iso")
@@ -104,6 +105,7 @@ Examples:
         bool(args.import_preset),
         bool(args.export_deploy_script),
         bool(args.export_kickstart),
+        bool(args.export_ansible),
         args.build_iso,
     ]
     is_cli_requested = any(cli_flags)

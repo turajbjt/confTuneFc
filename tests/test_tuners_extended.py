@@ -459,5 +459,63 @@ class TestSysctlTunerExtended(unittest.TestCase):
         self.assertIn("[DRY RUN]", msg)
 
 
+class TestDNFTunerExtended(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp(prefix="conftune_dnf_")
+        self.safety = SafetyEngine(dry_run=True)
+        self.backup_mgr = BackupManager(backup_dir=self.test_dir)
+        self.tuner = DNFTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_get_current_settings_dnf(self):
+        settings = self.tuner.get_current_settings()
+        self.assertIn("max_parallel_downloads", settings)
+        self.assertIn("fastestmirror", settings)
+        self.assertIn("is_dnf5", settings)
+
+    def test_apply_optimizations_dry_run(self):
+        ok, msg = self.tuner.apply_optimizations(max_parallel_downloads=12, fastestmirror=True)
+        self.assertTrue(ok)
+        self.assertIn("[DRY RUN]", msg)
+
+    def test_clean_cache_dry_run(self):
+        ok, msg = self.tuner.clean_cache()
+        self.assertTrue(ok)
+        self.assertIn("[DRY RUN]", msg)
+
+
+class TestPresetManagerExtended(unittest.TestCase):
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp(prefix="conftune_preset_")
+        self.safety = SafetyEngine(dry_run=True)
+        self.backup_mgr = BackupManager(backup_dir=self.test_dir)
+        self.preset_mgr = PresetManager(safety=self.safety, backup_mgr=self.backup_mgr)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_dir, ignore_errors=True)
+
+    def test_generate_ansible_playbook(self):
+        sample_preset = {
+            "name": "Fleet Playbook Test",
+            "sysctl": {"vm.swappiness": "10", "net.core.somaxconn": "32768"},
+            "dnf": {"max_parallel_downloads": 10, "fastestmirror": "True"},
+            "journald_max": "200M",
+            "tuned_profile": "throughput-performance",
+        }
+        out_playbook = os.path.join(self.test_dir, "playbook.yml")
+        ok, msg = self.preset_mgr.generate_ansible_playbook(sample_preset, out_playbook)
+        self.assertTrue(ok)
+        self.assertTrue(os.path.isfile(out_playbook))
+        with open(out_playbook, "r") as f:
+            content = f.read()
+        self.assertIn("Apply ConfTune FC Performance Tuning", content)
+        self.assertIn("vm.swappiness", content)
+        self.assertIn("max_parallel_downloads", content)
+        self.assertIn("SystemMaxUse=200M", content)
+        self.assertIn("throughput-performance", content)
+
+
 if __name__ == "__main__":
     unittest.main()

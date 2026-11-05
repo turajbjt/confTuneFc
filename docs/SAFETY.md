@@ -22,18 +22,20 @@ System tuning involves modifying low-level operating system parameters. To ensur
    - All sysctl identifiers and values are validated against strict alphanumeric and dotted format patterns (`^[a-zA-Z0-9_\.\-]+$`).
    - Semicolons, pipes, backticks, dollar signs, and newline characters are rejected.
 
-5. **Privilege Boundary Enforcement**:
-   - Read-only inspection (`--status`, `--list-profiles`, `--snapshots`, and dry-run simulations) does not require root privileges.
-   - System modifications verify UID 0 (`os.geteuid() == 0`) or offer Polkit elevation (`pkexec`) via `packaging/io.github.conftune_fc.policy`.
+5. **Privilege Boundary Enforcement & UI Locking**:
+   - Read-only inspection (`--status`, `--list-profiles`, `--snapshots`, monitoring dashboards) and dry-run simulations do not require root privileges.
+   - User space configurations (subpixel font hinting in `~/.config/fontconfig`, GNOME tweaks via `gsettings`, login autostart entries in `~/.config/autostart`, preset export, deploy.sh generation, and Kickstart creation) are fully accessible to casual users without root.
+   - System modifications writing to `/etc/` or `/sys/` require UID 0. In the GUI, administrative actions display visual locks (`🔒`) and open a native PolicyKit elevation dialog (`pkexec`) or provide instructions for `sudo conftune-fc`.
+   - In CLI mode, administrative actions invoked without root are intercepted upfront and rejected with exit code `1`, displaying the exact `sudo` command required.
 
 ---
 
 ## 🗄️ Snapshot Storage Locations
 
-| Execution Mode | Snapshot Directory | Log Directory |
-| :--- | :--- | :--- |
-| **Root (`sudo` / `pkexec`)** | `/var/lib/conftune/backups` | `/var/log/conftune` |
-| **Unprivileged User** | `~/.local/share/conftune/backups` | `~/.local/share/conftune/logs` |
+| Execution Mode | Snapshot Directory | Log Directory | Fallback (Sandboxed / Read-Only Home) |
+| :--- | :--- | :--- | :--- |
+| **Root (`sudo` / `pkexec`)** | `/var/lib/conftune/backups` | `/var/log/conftune` | `/tmp/conftune/backups` & `/tmp/conftune/logs` |
+| **Unprivileged User** | `~/.local/share/conftune/backups` | `~/.local/share/conftune/logs` | `/tmp/conftune/backups` & `/tmp/conftune/logs` |
 
 ---
 

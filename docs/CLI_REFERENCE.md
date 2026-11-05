@@ -14,6 +14,17 @@ conftune [OPTIONS]
 
 ---
 
+## 🛡️ Privilege Model & Security Guard
+
+ConfTune FC enforces strict boundary separation between casual read-only tasks and administrative modifications:
+
+- **`[User Safe]`**: Any unprivileged user can safely execute these commands without `sudo` (e.g. status queries, profile simulation, user font rendering, desktop tweaks, preset export, deploy script generation, Kickstart generation).
+- **`[Requires Sudo]`**: Modifies protected kernel parameters in `/sys/`, daemons in `/etc/systemd/`, sysctls in `/etc/sysctl.d/`, or repositories in `/etc/dnf/`. Requires root or `sudo`.
+
+> **Automatic Elevation Guard**: If a non-root user executes an administrative command with `--apply` (or non-dry-run actions like `--trim`, `--governor`, `--rollback`), ConfTune FC cleanly halts execution with exit code `1`, displaying the exact `sudo` command required.
+
+---
+
 ## 📌 Command Reference
 
 ### 1. System Status & Inspection

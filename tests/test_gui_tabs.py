@@ -428,6 +428,12 @@ class TestGUITabs(unittest.TestCase):
             tab._generate_kickstart()
         self.assertTrue(os.path.isfile(out_ks))
 
+        # Ansible Playbook
+        out_yml = os.path.join(self.test_dir, "playbook_test.yml")
+        with patch.object(QFileDialog, "getSaveFileName", return_value=(out_yml, "All Files (*)")):
+            tab._generate_ansible_playbook()
+        self.assertTrue(os.path.isfile(out_yml))
+
         # Build ISO
         with patch("conftune.gui.tab_presets.run_async_task") as mock_iso_task:
             with patch.object(QFileDialog, "getOpenFileName", return_value=(out_sh, "All Files (*)")):
