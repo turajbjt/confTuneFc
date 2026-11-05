@@ -105,9 +105,9 @@ class SystemdTab(QWidget):
         self.table_rec.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table_rec.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table_rec.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        self.table_rec.setColumnWidth(3, 175)
+        self.table_rec.setColumnWidth(3, 195)
         self.table_rec.setMinimumHeight(260)
-        self.table_rec.verticalHeader().setDefaultSectionSize(42)
+        self.table_rec.verticalHeader().setDefaultSectionSize(44)
         self.table_rec.verticalHeader().setVisible(False)
         self.table_rec.setAlternatingRowColors(True)
         layout.addWidget(self.table_rec)
@@ -131,6 +131,7 @@ class SystemdTab(QWidget):
 
         # Recs
         recs = self.systemd_tuner.get_server_removable_services()
+        self.table_rec.clearContents()
         self.table_rec.setRowCount(len(recs))
         for row, r in enumerate(recs):
             it_name = QTableWidgetItem(r["service"])
@@ -141,11 +142,12 @@ class SystemdTab(QWidget):
             action_text = "Disable" if r["active"] else "Enable"
             btn_label = action_text if self.safety.is_root else f"🔒 {action_text} (Root)"
             btn_toggle = QPushButton(btn_label)
-            btn_toggle.setFixedHeight(30)
-            btn_toggle.setMinimumWidth(150)
-            btn_toggle.setStyleSheet("font-size: 12px; font-weight: 600; padding: 4px 10px;")
+            btn_toggle.setFixedHeight(32)
+            btn_toggle.setMinimumWidth(160)
             if r["active"]:
                 btn_toggle.setProperty("class", "destructive")
+                btn_toggle.style().unpolish(btn_toggle)
+                btn_toggle.style().polish(btn_toggle)
             btn_toggle.clicked.connect(lambda ch, s=r["service"], act=r["active"]: self._toggle_service(s, not act))
 
             self.table_rec.setItem(row, 0, it_name)

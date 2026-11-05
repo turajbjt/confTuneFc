@@ -124,36 +124,36 @@ QPushButton:disabled {
     border-color: #333333;
 }
 
-QPushButton.primary {
+QPushButton.primary, QPushButton[class="primary"] {
     background-color: #3584e4;
     border-color: #1c71d8;
     color: #ffffff;
     font-weight: bold;
 }
 
-QPushButton.primary:hover {
+QPushButton.primary:hover, QPushButton[class="primary"]:hover {
     background-color: #1c71d8;
 }
 
-QPushButton.success {
-    background-color: #2ec27e;
-    border-color: #26a269;
+QPushButton.success, QPushButton[class="success"] {
+    background-color: #26a269;
+    border-color: #1f8b57;
     color: #ffffff;
     font-weight: bold;
 }
 
-QPushButton.success:hover {
-    background-color: #26a269;
+QPushButton.success:hover, QPushButton[class="success"]:hover {
+    background-color: #1f8b57;
 }
 
-QPushButton.destructive {
+QPushButton.destructive, QPushButton[class="destructive"] {
     background-color: #e01b24;
     border-color: #c01c28;
     color: #ffffff;
     font-weight: bold;
 }
 
-QPushButton.destructive:hover {
+QPushButton.destructive:hover, QPushButton[class="destructive"]:hover {
     background-color: #c01c28;
 }
 
@@ -172,11 +172,31 @@ QTreeWidget::item, QTableWidget::item {
 }
 
 QTableWidget QPushButton {
-    padding: 4px 10px;
+    background-color: #383838;
+    color: #ffffff;
+    border: 1px solid #484848;
+    border-radius: 6px;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
     min-height: 28px;
-    border-radius: 4px;
+    min-width: 150px;
+}
+
+QTableWidget QPushButton:hover {
+    background-color: #444444;
+    border-color: #555555;
+}
+
+QTableWidget QPushButton.destructive, QTableWidget QPushButton[class="destructive"] {
+    background-color: #e01b24;
+    border-color: #c01c28;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+QTableWidget QPushButton.destructive:hover, QTableWidget QPushButton[class="destructive"]:hover {
+    background-color: #c01c28;
 }
 
 QHeaderView::section {
