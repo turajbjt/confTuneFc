@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.0
+Version:        1.0.1
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
