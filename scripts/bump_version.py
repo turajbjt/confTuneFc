@@ -92,6 +92,46 @@ def update_spec_file(new_version: str, message: str, author: str = "BuildDesignC
     print(f"  ✓ Updated packaging/conftune-fc.spec -> {new_version}")
 
 
+def update_metainfo_xml(new_version: str, message: str):
+    path = os.path.join(ROOT_DIR, "assets", "io.github.conftune_fc.metainfo.xml")
+    if not os.path.isfile(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    release_block = (
+        f'    <release version="{new_version}" date="{today}">\n'
+        f"      <description>\n"
+        f"        <p>{message}</p>\n"
+        f"      </description>\n"
+        f"    </release>\n"
+    )
+
+    if "<releases>" in content and f'version="{new_version}"' not in content:
+        content = content.replace("<releases>\n", f"<releases>\n{release_block}", 1)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"  ✓ Updated assets/io.github.conftune_fc.metainfo.xml -> {new_version}")
+
+
+def update_readme(new_version: str):
+    path = os.path.join(ROOT_DIR, "README.md")
+    if not os.path.isfile(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    updated = re.sub(
+        r'img\.shields\.io/badge/Version-[\d\.]+-blue',
+        f'img.shields.io/badge/Version-{new_version}-blue',
+        content,
+    )
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(updated)
+    print(f"  ✓ Updated README.md -> {new_version}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="ConfTune FC SemVer Bump Script")
     parser.add_argument("bump", nargs="?", default="patch", help="patch, minor, major, or explicit X.Y.Z")
@@ -106,6 +146,8 @@ def main():
     update_init_py(next_ver)
     update_pyproject_toml(next_ver)
     update_spec_file(next_ver, args.message)
+    update_metainfo_xml(next_ver, args.message)
+    update_readme(next_ver)
 
     if args.build_rpm:
         build_script = os.path.join(ROOT_DIR, "packaging", "build-rpm.sh")

@@ -2,12 +2,13 @@
 ### Fedora, Rocky Linux & CentOS System Setup, Configuration & Performance Tuner
 
 [![Linux](https://img.shields.io/badge/Platform-Fedora%20%7C%20Rocky%20%7C%20CentOS%20%7C%20RHEL-blue?logo=fedora)](https://getfedora.org)
+[![Version](https://img.shields.io/badge/Version-1.0.3-blue)](packaging/)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![RPM Package](https://img.shields.io/badge/RPM-Universal%20noarch-red?logo=redhat)](packaging/)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Safety](https://img.shields.io/badge/Safety-Pre--Tune%20Snapshots%20%26%201--Click%20Rollback-26a269)](docs/SAFETY.md)
-[![Tests](https://img.shields.io/badge/Tests-111%2F111%20Passing-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-115%2F115%20Passing-brightgreen)](tests/)
 
 **ConfTune FC** is a safety-first configuration, setup, and performance tuning application designed specifically for RPM-based Linux distributions, including **Fedora Workstation & Server** (Fedora 40, 41, 42, 43, 44, 45+), **Rocky Linux** (8, 9, 10), and **CentOS Stream / RHEL**.
 
@@ -21,6 +22,7 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 - [💻 Command-Line Interface (CLI) Reference](docs/CLI_REFERENCE.md)
 - [🏗️ Architecture & Design Specification](docs/ARCHITECTURE.md)
 - [🛡️ Safety Engine & Rollback Principles](docs/SAFETY.md)
+- [📝 Release Notes (v1.0.3)](docs/RELEASE_NOTES_v1.0.3.md)
 - [🤝 Contributing Guidelines](CONTRIBUTING.md)
 
 ---
@@ -45,7 +47,8 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
   - **KVM & Libvirt Virtualization**: Tuned `virtual-host` profile, KSM (Kernel Samepage Merging) memory deduplication, and reduced swappiness.
 - **Portable Presets & Fleet Provisioning**: Capture active host tuning into `.conftune.tar.gz` archives, generate standalone 1-file `deploy.sh` scripts for remote machines, create Anaconda Kickstart (`.ks`) profiles, and generate bootable ISOs using `mkksiso`.
 - **Automatic Pre-Tune Snapshots & Rollback**: Every change creates a timestamped snapshot with JSON metadata. Revert any change with **1-click rollback**.
-- **Two-Tier Privilege Separation & PolicyKit**: Casual users can safely explore dashboards, inspect hardware, run dry-run tuning simulations, customize user fonts/GNOME tweaks, and export deploy scripts without root. Administrative write operations to `/etc/` and `/sys/` are locked (`🔒`) and protected with PolicyKit (`pkexec`) prompts.
+- **Two-Tier Privilege Separation & Asynchronous PolicyKit Elevation**: Casual users can safely explore dashboards, inspect hardware, run dry-run tuning simulations, customize user fonts/GNOME tweaks, and export deploy scripts without root. Administrative write operations to `/etc/` and `/sys/` are locked (`🔒`) and protected with PolicyKit (`pkexec`) prompts featuring XWayland authorization (`xhost +SI:localuser:root`), background thread process supervision, and asynchronous handshake protocols (`CONFTUNE_ELEVATED_READY`) that eliminate window crashes and failed displays.
+- **Pixel-Perfect Adwaita Dark Styling**: Fully compliant GNOME 45+ Adwaita theme with transparent typography layers that blend seamlessly into cards, headers, and dialogs without rectangular background artifacts.
 - **Dual Mode (GUI & Headless CLI)**: Beautiful Adwaita UI with 16 specialized feature tabs for desktop users; clean, non-interactive CLI with `--dry-run` and `--apply` flags for server administrators.
 
 ---

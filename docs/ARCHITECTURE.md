@@ -138,3 +138,20 @@ Profiles the host system using non-destructive inspection:
 
 ### 12. Threading Model (`conftune/gui/workers.py`)
 All asynchronous operations (profile application, TRIM execution, log vacuuming, ISO generation) run on background `QThread` instances using `run_async_task()`. The GUI main thread handles rendering and user interaction without blocking.
+
+---
+
+### 13. Privilege Escalation & PolicyKit Architecture (`conftune/gui/auth.py`)
+ConfTune FC adopts the proven `confclean-fc` privilege escalation pattern to bridge Wayland desktop security constraints with administrative root execution:
+- **Two-Tier Privilege Isolation**: Distinguishes user-safe tasks (hardware inspection, simulations, preset exports) from privileged tasks (writing to `/etc` or `/sys`).
+- **XWayland Authorization**: Executes `xhost +SI:localuser:root` so the elevated root process can securely attach to the user's XWayland display server.
+- **Environment Forwarding**: Preserves `DISPLAY`, `XAUTHORITY`, and sets `QT_QPA_PLATFORM=xcb` via `/usr/bin/env` so root Qt GUI windows render seamlessly.
+- **Asynchronous Handshake (`ElevationWorker`)**: The parent process spawns `pkexec` on a dedicated `QThread` and monitors stdout for `CONFTUNE_ELEVATED_READY`. The parent only exits after the child GUI window is verified visible and ready.
+- **Resilient Cancellation Handling**: If the user cancels the Polkit password prompt or authentication fails, the parent process catches the exit code, resets the UI buttons, and stays running without crashing or terminating.
+
+---
+
+### 14. Styling & Typography Composition (`conftune/gui/styles.py`)
+- **Adwaita Dark Theme**: Native GNOME 45+ design tokens using `#1e1e1e` (window canvas), `#242424` (content viewport), and `#2d2d2d` (card containers).
+- **Transparent Widget Blending**: Base text controls (`QLabel`, `QCheckBox`, `QRadioButton`) enforce transparent backgrounds so text layers blend seamlessly into container surfaces without unsightly rectangular background clipping.
+- **Status Capsules**: Visual indicator pills (`#pill_badge`, `#pill_root`, etc.) maintain explicit rounded border-radius badges with distinct high-contrast colors.
