@@ -83,6 +83,11 @@ class TestGUITabs(unittest.TestCase):
         self.mock_crit = self.crit_patcher.start()
 
     def tearDown(self):
+        from conftune.gui.workers import _ACTIVE_WORKERS
+        for w in list(_ACTIVE_WORKERS):
+            w.wait(1000)
+        QCoreApplication.processEvents()
+
         self.q_patcher.stop()
         self.info_patcher.stop()
         self.warn_patcher.stop()
@@ -90,16 +95,39 @@ class TestGUITabs(unittest.TestCase):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_auth_module(self):
+        from conftune.gui.auth import SudoAuthDialog
         self.assertIsInstance(is_root(), bool)
-        # Test prompt_root_required with pkexec available
-        with patch("shutil.which", return_value="/usr/bin/pkexec"):
-            prompt_root_required(None, "Test Action")
-            self.mock_q.assert_called()
 
-        # Test prompt_root_required with pkexec unavailable
-        with patch("shutil.which", return_value=None):
-            prompt_root_required(None, "Test Action")
-            self.mock_warn.assert_called()
+        # 1. When safety is in dry-run, prompt_root_required allows action
+        safety_dry = SafetyEngine(dry_run=True)
+        res_dry = prompt_root_required(None, "Test Action", safety_dry)
+        self.assertTrue(res_dry)
+
+        # 2. When safety is unprivileged and user enters sudo password successfully
+        safety_user = SafetyEngine(dry_run=False)
+        safety_user.is_root = False
+        with patch.object(SudoAuthDialog, "exec", return_value=1), \
+             patch.object(safety_user, "authenticate_sudo", return_value=(True, "OK")):
+            dialog = SudoAuthDialog(None, "Test Privileged Operation", safety_user)
+            dialog.txt_password.setText("correct_pass")
+            dialog._handle_auth()
+            self.assertTrue(dialog.authenticated)
+
+        # 3. When authentication fails, dialog displays error and stays open
+        safety_fail = SafetyEngine(dry_run=False)
+        safety_fail.is_root = False
+        with patch.object(safety_fail, "authenticate_sudo", return_value=(False, "Incorrect password")):
+            dialog = SudoAuthDialog(None, "Test Privileged Operation", safety_fail)
+            dialog.txt_password.setText("wrong_pass")
+            dialog._handle_auth()
+            self.assertFalse(dialog.authenticated)
+            self.assertFalse(dialog.lbl_error.isHidden())
+            self.assertIn("Incorrect password", dialog.lbl_error.text())
+
+        # 4. Fallback warning when no safety engine attached
+        res_fallback = prompt_root_required(None, "Test Action")
+        self.assertFalse(res_fallback)
+        self.mock_warn.assert_called()
 
     def test_root_locked_offerings_when_unprivileged(self):
         safety_user = SafetyEngine(dry_run=True)
@@ -496,9 +524,9 @@ class TestGUITabs(unittest.TestCase):
             self.assertEqual(window.stack.currentIndex(), i)
 
         # Test elevation method handler
-        with patch("shutil.which", return_value=None):
+        with patch("conftune.gui.app.prompt_root_required", return_value=True):
             window._elevate_root()
-            self.mock_warn.assert_called()
+            self.mock_info.assert_called()
 
 
 if __name__ == "__main__":

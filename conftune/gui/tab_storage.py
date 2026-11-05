@@ -141,16 +141,16 @@ class StorageTab(QWidget):
 
     def _enable_trim(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Enable Weekly TRIM Timer (fstrim.timer)")
-            return
+            if not prompt_root_required(self, "Enable Weekly TRIM Timer (fstrim.timer)", self.safety):
+                return
         ok, msg = self.storage_tuner.enable_fstrim_timer()
         QMessageBox.information(self, "fstrim.timer Enabled", msg)
         self._refresh()
 
     def _run_trim_now(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Run TRIM Discard Across All Block Devices")
-            return
+            if not prompt_root_required(self, "Run TRIM Discard Across All Block Devices", self.safety):
+                return
         self.btn_run_trim.setEnabled(False)
 
         def task():
@@ -164,7 +164,7 @@ class StorageTab(QWidget):
 
     def _configure_zram(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Configure ZRAM Compressed Swap Engine")
-            return
+            if not prompt_root_required(self, "Configure ZRAM Compressed Swap Engine", self.safety):
+                return
         ok, msg = self.storage_tuner.configure_zram()
         QMessageBox.information(self, "ZRAM Configured", msg)

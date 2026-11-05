@@ -132,8 +132,8 @@ class BackupsTab(QWidget):
             return
 
         if not self.safety.is_root:
-            prompt_root_required(self, f"Rollback System Configuration to Snapshot '{self.selected_snap_id}'")
-            return
+            if not prompt_root_required(self, f"Rollback System Configuration to Snapshot '{self.selected_snap_id}'", self.safety):
+                return
 
         reply = QMessageBox.question(
             self,

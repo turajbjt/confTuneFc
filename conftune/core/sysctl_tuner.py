@@ -233,17 +233,15 @@ class SysctlTuner:
             return True, f"[DRY RUN] Generated {len(parameters)} parameters for {SYSCTL_CONF_PATH}."
 
         try:
-            os.makedirs(os.path.dirname(SYSCTL_CONF_PATH), exist_ok=True)
-            with open(SYSCTL_CONF_PATH, "w", encoding="utf-8") as f:
-                f.write(full_text)
+            ok_w, msg_w = self.safety.write_file(SYSCTL_CONF_PATH, full_text)
+            if not ok_w:
+                return False, f"Failed to write sysctl configuration: {msg_w}"
 
             # Apply sysctl settings
             sysctl_cmd = shutil.which("sysctl")
             if sysctl_cmd:
-                res = subprocess.run(
+                res = self.safety.run_command(
                     [sysctl_cmd, "-p", SYSCTL_CONF_PATH],
-                    capture_output=True,
-                    text=True,
                     timeout=5,
                 )
                 if res.returncode != 0:

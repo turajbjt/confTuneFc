@@ -153,8 +153,8 @@ class ServerTab(QWidget):
 
     def _switch_tuned_profile(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Switch Red Hat Tuned Profile")
-            return
+            if not prompt_root_required(self, "Switch Red Hat Tuned Profile", self.safety):
+                return
         new_prof = self.combo_tuned.currentText()
         if not new_prof:
             return

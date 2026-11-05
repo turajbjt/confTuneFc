@@ -67,7 +67,7 @@ class FedyTuner:
             return True, f"[DRY RUN] Would execute: {' '.join(cmd)}"
 
         try:
-            res = subprocess.run(" ".join(cmd), shell=True, capture_output=True, text=True, timeout=60)
+            res = self.safety.run_command(["bash", "-c", " ".join(cmd)], timeout=60)
             if res.returncode == 0:
                 self.logger.info("Successfully enabled RPM Fusion Free and Nonfree.")
                 return True, "RPM Fusion Free and Nonfree repositories installed successfully."
@@ -102,7 +102,7 @@ class FedyTuner:
             return True, f"[DRY RUN] Would execute: {' '.join(cmd)}"
 
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            res = self.safety.run_command(cmd, timeout=180)
             if res.returncode == 0:
                 self.logger.info("Installed multimedia codecs and hardware video acceleration.")
                 return True, "Multimedia codecs (GStreamer, FFmpeg, OpenH264, VA-API) installed."

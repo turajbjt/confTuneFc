@@ -139,8 +139,8 @@ class SysctlTab(QWidget):
             return
 
         if not self.safety.is_root:
-            prompt_root_required(self, "Saving kernel sysctl overrides to /etc/sysctl.d/99-conftune.conf")
-            return
+            if not prompt_root_required(self, "Saving kernel sysctl overrides to /etc/sysctl.d/99-conftune.conf", self.safety):
+                return
 
         ok, msg = self.sysctl_tuner.apply_parameters(params, profile_name="custom_gui")
         QMessageBox.information(self, "Parameters Saved", msg)

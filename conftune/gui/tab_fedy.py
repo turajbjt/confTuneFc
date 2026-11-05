@@ -183,8 +183,8 @@ class FedyTab(QWidget):
 
     def _install_rpmfusion(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Enable RPM Fusion Repositories")
-            return
+            if not prompt_root_required(self, "Enable RPM Fusion Repositories", self.safety):
+                return
         self.btn_install_rf.setEnabled(False)
 
         def task():
@@ -199,8 +199,8 @@ class FedyTab(QWidget):
 
     def _install_codecs(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Install All Multimedia Codecs")
-            return
+            if not prompt_root_required(self, "Install All Multimedia Codecs", self.safety):
+                return
         self.btn_install_codecs.setEnabled(False)
 
         def task():

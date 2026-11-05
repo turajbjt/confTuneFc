@@ -204,8 +204,8 @@ class ProfilesTab(QWidget):
             return
 
         if not dry_run and not self.safety.is_root:
-            prompt_root_required(self, "Applying this tuning profile to system configuration files")
-            return
+            if not prompt_root_required(self, "Applying this tuning profile to system configuration files", self.safety):
+                return
 
         self.progress.setVisible(True)
         self.btn_apply.setEnabled(False)

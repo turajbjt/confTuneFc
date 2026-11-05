@@ -72,7 +72,7 @@ class ServerTuner:
             return True, f"[DRY RUN] Would execute: tuned-adm profile {profile_name}"
 
         try:
-            res = subprocess.run(["tuned-adm", "profile", profile_name], capture_output=True, text=True, timeout=10)
+            res = self.safety.run_command(["tuned-adm", "profile", profile_name], timeout=10)
             if res.returncode == 0:
                 self.logger.info(f"Switched tuned profile to '{profile_name}'.")
                 return True, f"Active tuned profile changed to '{profile_name}'."
@@ -126,7 +126,7 @@ class ServerTuner:
             return True, f"[DRY RUN] Would execute: setsebool -P {boolean_name} {val}"
 
         try:
-            res = subprocess.run(["setsebool", "-P", boolean_name, val], capture_output=True, text=True, timeout=15)
+            res = self.safety.run_command(["setsebool", "-P", boolean_name, val], timeout=15)
             if res.returncode == 0:
                 self.logger.info(f"Set SELinux boolean {boolean_name} to {enable}.")
                 return True, f"SELinux boolean '{boolean_name}' set to {'on' if enable else 'off'}."
@@ -286,13 +286,13 @@ class ServerTuner:
 
         try:
             # Load br_netfilter module if available
-            subprocess.run(["modprobe", "br_netfilter"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.safety.run_command(["modprobe", "br_netfilter"])
 
             # Persist module loading
             mod_file = "/etc/modules-load.d/conftune-containers.conf"
-            os.makedirs(os.path.dirname(mod_file), exist_ok=True)
-            with open(mod_file, "w", encoding="utf-8") as f:
-                f.write("br_netfilter\noverlay\n")
+            ok_w, msg_w = self.safety.write_file(mod_file, "br_netfilter\noverlay\n")
+            if not ok_w:
+                return False, msg_w
 
             return True, "Container host kernel modules (br_netfilter, overlay) loaded and persisted."
         except Exception as e:
@@ -312,12 +312,12 @@ class ServerTuner:
         results = []
         # Activate virtual-host tuned profile
         if shutil.which("tuned-adm"):
-            subprocess.run(["tuned-adm", "profile", "virtual-host"], check=False)
+            self.safety.run_command(["tuned-adm", "profile", "virtual-host"])
             results.append("Tuned profile set to virtual-host.")
 
         # Enable KSM memory deduplication daemon if available
         if os.path.exists("/sys/kernel/mm/ksm"):
-            subprocess.run(["systemctl", "enable", "--now", "ksmtuned"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.safety.run_command(["systemctl", "enable", "--now", "ksmtuned"])
             results.append("ksmtuned service activated for VM memory deduplication.")
 
         return True, " ".join(results) if results else "Virtualization host configured."

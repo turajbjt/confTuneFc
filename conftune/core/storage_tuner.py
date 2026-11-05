@@ -46,7 +46,7 @@ class StorageTuner:
             return True, "[DRY RUN] Would execute: systemctl enable --now fstrim.timer"
 
         try:
-            res = subprocess.run(["systemctl", "enable", "--now", "fstrim.timer"], capture_output=True, text=True, timeout=5)
+            res = self.safety.run_command(["systemctl", "enable", "--now", "fstrim.timer"], timeout=5)
             if res.returncode == 0:
                 self.logger.info("Enabled and started fstrim.timer.")
                 return True, "Weekly SSD/NVMe TRIM timer enabled and activated."
@@ -64,7 +64,7 @@ class StorageTuner:
             return True, "[DRY RUN] Would execute: fstrim -av"
 
         try:
-            res = subprocess.run(["fstrim", "-av"], capture_output=True, text=True, timeout=60)
+            res = self.safety.run_command(["fstrim", "-av"], timeout=60)
             if res.returncode == 0:
                 self.logger.info(f"fstrim output: {res.stdout.strip()}")
                 return True, res.stdout.strip()
@@ -113,8 +113,9 @@ class StorageTuner:
             return True, f"[DRY RUN] Would set scheduler for {device} to {scheduler}"
 
         try:
-            with open(sched_file, "w") as f:
-                f.write(scheduler)
+            ok_w, msg_w = self.safety.write_file(sched_file, scheduler)
+            if not ok_w:
+                return False, msg_w
             self.logger.info(f"Set I/O scheduler on {device} to '{scheduler}'.")
             return True, f"Scheduler on {device} changed to {scheduler}."
         except Exception as e:
@@ -146,9 +147,9 @@ class StorageTuner:
             return True, "[DRY RUN] ZRAM configuration simulated."
 
         try:
-            os.makedirs(os.path.dirname(ZRAM_CONF_PATH), exist_ok=True)
-            with open(ZRAM_CONF_PATH, "w", encoding="utf-8") as f:
-                f.write(content)
+            ok_w, msg_w = self.safety.write_file(ZRAM_CONF_PATH, content)
+            if not ok_w:
+                return False, msg_w
             self.logger.info(f"Wrote ZRAM configuration to {ZRAM_CONF_PATH}.")
             return True, "ZRAM generator configuration saved."
         except Exception as e:

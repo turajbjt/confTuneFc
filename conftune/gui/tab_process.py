@@ -159,8 +159,8 @@ class ProcessTab(QWidget):
 
     def _apply_oomd(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply systemd-oomd Memory Pressure Limits")
-            return
+            if not prompt_root_required(self, "Apply systemd-oomd Memory Pressure Limits", self.safety):
+                return
         press = self.combo_press.currentText()
         swap = self.combo_swap.currentText()
         ok, msg = self.process_tuner.configure_oomd_limits(press, swap)
@@ -168,8 +168,8 @@ class ProcessTab(QWidget):
 
     def _protect_process(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Adjust Process OOM Killer Score")
-            return
+            if not prompt_root_required(self, "Adjust Process OOM Killer Score", self.safety):
+                return
         pname = self.txt_pname.text().strip()
         if not pname:
             QMessageBox.warning(self, "Input Required", "Please enter a process name.")

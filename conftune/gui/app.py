@@ -53,6 +53,7 @@ from conftune.gui.tab_privacy import PrivacyTab
 from conftune.gui.tab_process import ProcessTab
 from conftune.gui.tab_profiles import ProfilesTab
 from conftune.gui.tab_server import ServerTab
+from conftune.gui.auth import prompt_root_required
 from conftune.gui.tab_specialized import SpecializedTab
 from conftune.gui.tab_storage import StorageTab
 from conftune.gui.tab_sysctl import SysctlTab
@@ -144,19 +145,19 @@ class MainWindow(QMainWindow):
         h_layout.addStretch()
 
         # Mode Badge (Root vs User)
-        is_root = (os.geteuid() == 0)
+        is_root = (os.geteuid() == 0) or self.safety.is_root
         user_name = os.environ.get("USER", "root" if is_root else "user")
         if is_root:
-            mode_pill = QLabel("🛡️ Mode: Root (System Administrator)")
-            mode_pill.setObjectName("pill_root")
+            self.mode_pill = QLabel("🛡️ Mode: Root (System Administrator)")
+            self.mode_pill.setObjectName("pill_root")
         else:
-            mode_pill = QLabel(f"🔒 Mode: User ({user_name}) - System Writes Locked")
-            mode_pill.setObjectName("pill_badge")
-        h_layout.addWidget(mode_pill)
+            self.mode_pill = QLabel(f"🔒 Mode: User ({user_name}) - System Writes Locked")
+            self.mode_pill.setObjectName("pill_badge")
+        h_layout.addWidget(self.mode_pill)
 
         # Elevate Button if running unprivileged
-        if not is_root and self.safety.has_pkexec:
-            self.btn_elevate = QPushButton("🛡️ Elevate (pkexec)")
+        if not is_root and (self.safety.has_sudo or self.safety.has_pkexec):
+            self.btn_elevate = QPushButton("🛡️ Elevate (sudo)")
             self.btn_elevate.setProperty("class", "primary")
             self.btn_elevate.clicked.connect(self._elevate_root)
             h_layout.addWidget(self.btn_elevate)
@@ -304,20 +305,31 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(row)
 
     def _elevate_root(self):
-        """Relaunch ConfTune FC as root via pkexec."""
-        pkexec_bin = shutil.which("pkexec")
-        if not pkexec_bin:
-            QMessageBox.warning(self, "pkexec Missing", "PolicyKit pkexec utility is not installed.")
-            return
+        """Elevate ConfTune FC session to administrator mode via in-app sudo."""
+        ok = prompt_root_required(
+            self,
+            "Elevate ConfTune FC to Administrator Mode",
+            self.safety,
+            on_elevated=self._on_session_elevated,
+        )
+        if ok:
+            QMessageBox.information(
+                self,
+                "Administrator Access Unlocked",
+                "Session successfully elevated with sudo privileges! All administrative tuning controls are now unlocked.",
+            )
 
-        main_py = os.path.abspath(sys.argv[0])
-        cmd = [pkexec_bin, sys.executable, main_py]
-        try:
-            self.logger.info("Spawning elevated process via pkexec...")
-            subprocess.Popen(cmd)
-            sys.exit(0)
-        except Exception as e:
-            QMessageBox.critical(self, "Elevation Error", f"Could not elevate process: {e}")
+    def _on_session_elevated(self):
+        """Update GUI indicators and refresh tabs after successful elevation."""
+        user_name = os.environ.get("USER", "user")
+        if hasattr(self, "mode_pill"):
+            self.mode_pill.setText(f"🛡️ Mode: Elevated (sudo: {user_name})")
+            self.mode_pill.setObjectName("pill_root")
+            self.mode_pill.style().unpolish(self.mode_pill)
+            self.mode_pill.style().polish(self.mode_pill)
+        if hasattr(self, "btn_elevate"):
+            self.btn_elevate.setVisible(False)
+        self.logger.info("ConfTune FC session successfully elevated to administrator mode via sudo.")
 
 
 def run_gui(ready_signal: bool = False) -> None:

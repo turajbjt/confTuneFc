@@ -6,6 +6,7 @@ Safety, Logger, and Backup Manager.
 
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
@@ -55,6 +56,32 @@ class TestSafetyEngineExtended(unittest.TestCase):
             ok, msg = engine.verify_privilege("Test action")
             self.assertTrue(ok)
             self.assertIn("Root privileges verified", msg)
+
+    def test_sudo_authentication_and_safe_writes(self):
+        engine = SafetyEngine(dry_run=False)
+        # Test sudo auth success
+        with patch("subprocess.run") as mock_sub:
+            mock_sub.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout=b"", stderr=b"")
+            ok, msg = engine.authenticate_sudo("test_pass")
+            self.assertTrue(ok)
+            self.assertTrue(engine.is_root)
+            self.assertEqual(engine.sudo_password, "test_pass")
+
+        # Test safe write in dry run
+        engine.dry_run = True
+        ok, msg = engine.write_file("/tmp/test_dry.txt", "content")
+        self.assertTrue(ok)
+        self.assertIn("[DRY RUN]", msg)
+
+        # Test safe copy in dry run
+        ok_c, msg_c = engine.copy_file("/tmp/src.txt", "/tmp/dst.txt")
+        self.assertTrue(ok_c)
+        self.assertIn("[DRY RUN]", msg_c)
+
+        # Test safe remove in dry run
+        ok_r, msg_r = engine.remove_file("/tmp/dst.txt")
+        self.assertTrue(ok_r)
+        self.assertIn("[DRY RUN]", msg_r)
 
     def test_sanitize_sysctl_value(self):
         engine = SafetyEngine()
@@ -340,6 +367,7 @@ class TestAutostartTunerExtended(unittest.TestCase):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_toggle_autostart_entry(self):
+        self.safety.dry_run = False
         # Create a mock .desktop file
         desktop_file = os.path.join(self.test_dir, "test_app.desktop")
         with open(desktop_file, "w", encoding="utf-8") as f:

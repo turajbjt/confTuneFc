@@ -68,7 +68,10 @@ class AutostartTab(QWidget):
         self.table_auto.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table_auto.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table_auto.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.table_auto.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_auto.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+        self.table_auto.setColumnWidth(3, 175)
+        self.table_auto.verticalHeader().setDefaultSectionSize(42)
+        self.table_auto.verticalHeader().setVisible(False)
         self.table_auto.setAlternatingRowColors(True)
         layout.addWidget(self.table_auto)
 
@@ -128,6 +131,9 @@ class AutostartTab(QWidget):
                 btn_txt = f"🔒 {btn_txt} (Root)"
 
             btn_tog = QPushButton(btn_txt)
+            btn_tog.setFixedHeight(30)
+            btn_tog.setMinimumWidth(150)
+            btn_tog.setStyleSheet("font-size: 12px; font-weight: 600; padding: 4px 10px;")
             if e["enabled"]:
                 btn_tog.setProperty("class", "destructive")
             btn_tog.clicked.connect(lambda ch, p=e["path"], en=e["enabled"]: self._toggle_entry(p, not en))
@@ -135,23 +141,23 @@ class AutostartTab(QWidget):
 
     def _toggle_entry(self, path: str, enable: bool):
         if path.startswith("/etc/") and not self.safety.is_root:
-            prompt_root_required(self, f"{'Enable' if enable else 'Disable'} System Autostart Application")
-            return
+            if not prompt_root_required(self, f"{'Enable' if enable else 'Disable'} System Autostart Application", self.safety):
+                return
         ok, msg = self.autostart_tuner.toggle_autostart_entry(path, enable)
         QMessageBox.information(self, "Autostart Updated", msg)
         self._refresh()
 
     def _apply_coredump(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Configure systemd-coredump Storage Ceiling")
-            return
+            if not prompt_root_required(self, "Configure systemd-coredump Storage Ceiling", self.safety):
+                return
         val = self.combo_cd.currentText()
         ok, msg = self.autostart_tuner.configure_coredump_limit(val)
         QMessageBox.information(self, "Core Dump Limit Applied", msg)
 
     def _toggle_abrt(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Manage ABRT Bug Reporting Daemons")
-            return
+            if not prompt_root_required(self, "Manage ABRT Bug Reporting Daemons", self.safety):
+                return
         ok, msg = self.autostart_tuner.toggle_abrt_services(False)
         QMessageBox.information(self, "ABRT Daemons Updated", msg)

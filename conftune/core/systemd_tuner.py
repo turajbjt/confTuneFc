@@ -102,7 +102,7 @@ class SystemdTuner:
 
         cmd = ["systemctl", "enable" if enable else "disable", "--now", service_name]
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            res = self.safety.run_command(cmd, timeout=10)
             if res.returncode == 0:
                 self.logger.info(f"Successfully ran systemctl {action_verb} {service_name}")
                 return True, f"Service {service_name} {'enabled' if enable else 'disabled'}."
@@ -136,15 +136,15 @@ class SystemdTuner:
             return True, f"[DRY RUN] journald size cap ({max_size}) simulated."
 
         try:
-            os.makedirs(os.path.dirname(JOURNALD_CONF_PATH), exist_ok=True)
-            with open(JOURNALD_CONF_PATH, "w", encoding="utf-8") as f:
-                f.write(content)
+            ok_w, msg_w = self.safety.write_file(JOURNALD_CONF_PATH, content)
+            if not ok_w:
+                return False, f"Failed to write journald configuration: {msg_w}"
 
             # Restart journald to pick up changes
-            subprocess.run(["systemctl", "restart", "systemd-journald"], check=False)
+            self.safety.run_command(["systemctl", "restart", "systemd-journald"])
             # Vacuum logs to respect limit immediately
             if shutil.which("journalctl"):
-                subprocess.run(["journalctl", f"--vacuum-size={max_size}"], check=False)
+                self.safety.run_command(["journalctl", f"--vacuum-size={max_size}"])
 
             self.logger.info(f"Applied journald storage limit ({max_size}) in {JOURNALD_CONF_PATH}.")
             return True, f"Journald maximum disk usage set to {max_size}."

@@ -171,6 +171,14 @@ QTreeWidget::item, QTableWidget::item {
     padding: 6px;
 }
 
+QTableWidget QPushButton {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 28px;
+    border-radius: 4px;
+}
+
 QHeaderView::section {
     background-color: #2a2a2a;
     color: #dedede;

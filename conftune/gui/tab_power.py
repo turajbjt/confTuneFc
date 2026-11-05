@@ -214,8 +214,8 @@ class PowerTab(QWidget):
 
     def _apply_auto_power(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply Dynamic Power Profile")
-            return
+            if not prompt_root_required(self, "Apply Dynamic Power Profile", self.safety):
+                return
         from conftune.core.power_daemon import PowerDaemon
         pd = PowerDaemon(self.power_tuner, self.safety)
         ok, msg, info = pd.run_once()
@@ -224,8 +224,8 @@ class PowerTab(QWidget):
 
     def _apply_governor(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply CPU Frequency Scaling Governor")
-            return
+            if not prompt_root_required(self, "Apply CPU Frequency Scaling Governor", self.safety):
+                return
         gov = self.combo_gov.currentText()
         ok, msg = self.power_tuner.set_governor_all_cores(gov)
         QMessageBox.information(self, "Governor Applied", msg)
@@ -233,8 +233,8 @@ class PowerTab(QWidget):
 
     def _apply_epp(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply CPU Energy Performance Preference")
-            return
+            if not prompt_root_required(self, "Apply CPU Energy Performance Preference", self.safety):
+                return
         epp = self.combo_epp.currentText()
         ok, msg = self.power_tuner.set_epp_all_cores(epp)
         QMessageBox.information(self, "EPP Mode Applied", msg)
@@ -242,8 +242,8 @@ class PowerTab(QWidget):
 
     def _apply_thp(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply Transparent Huge Pages Mode")
-            return
+            if not prompt_root_required(self, "Apply Transparent Huge Pages Mode", self.safety):
+                return
         thp_mode = self.combo_thp.currentText()
         ok, msg = self.power_tuner.set_thp_mode(thp_mode)
         QMessageBox.information(self, "THP Mode Applied", msg)

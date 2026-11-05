@@ -102,9 +102,12 @@ class DNFTuner:
                 parser.set("main", "keepcache", "True" if keepcache else "False")
                 parser.set("main", "clean_requirements_on_remove", "True")
 
-                os.makedirs(os.path.dirname(conf_file), exist_ok=True)
-                with open(conf_file, "w", encoding="utf-8") as f:
-                    parser.write(f)
+                import io
+                buf = io.StringIO()
+                parser.write(buf)
+                ok_w, msg_w = self.safety.write_file(conf_file, buf.getvalue())
+                if not ok_w:
+                    return False, f"Failed to write {conf_file}: {msg_w}"
 
                 self.logger.info(f"Successfully tuned DNF configuration in {conf_file}.")
 
@@ -126,7 +129,7 @@ class DNFTuner:
             return True, f"[DRY RUN] Would execute: {dnf_cmd} clean all"
 
         try:
-            res = subprocess.run([dnf_cmd, "clean", "all"], capture_output=True, text=True, timeout=30)
+            res = self.safety.run_command([dnf_cmd, "clean", "all"], timeout=30)
             if res.returncode == 0:
                 self.logger.info("Successfully cleaned DNF package and metadata cache.")
                 return True, "DNF package cache and metadata cleaned."

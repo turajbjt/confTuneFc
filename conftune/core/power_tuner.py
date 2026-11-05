@@ -63,8 +63,9 @@ class PowerTuner:
         count = 0
         try:
             for gf in gov_files:
-                with open(gf, "w") as f:
-                    f.write(governor)
+                ok_w, msg_w = self.safety.write_file(gf, governor)
+                if not ok_w:
+                    return False, msg_w
                 count += 1
             self.logger.info(f"Applied CPU governor '{governor}' across {count} cores.")
             return True, f"CPU scaling governor set to '{governor}' across {count} cores."
@@ -104,8 +105,9 @@ class PowerTuner:
         count = 0
         try:
             for f_path in files:
-                with open(f_path, "w") as f:
-                    f.write(epp_mode)
+                ok_w, msg_w = self.safety.write_file(f_path, epp_mode)
+                if not ok_w:
+                    return False, msg_w
                 count += 1
             self.logger.info(f"Applied CPU EPP '{epp_mode}' across {count} cores.")
             return True, f"CPU EPP mode set to '{epp_mode}' across {count} cores."
@@ -169,8 +171,9 @@ class PowerTuner:
             return True, f"[DRY RUN] Would write '{mode}' to {THP_FILE}"
 
         try:
-            with open(THP_FILE, "w") as f:
-                f.write(mode)
+            ok_w, msg_w = self.safety.write_file(THP_FILE, mode)
+            if not ok_w:
+                return False, msg_w
             self.logger.info(f"Transparent Huge Pages (THP) set to '{mode}'.")
             return True, f"Transparent Huge Pages mode set to '{mode}'."
         except Exception as e:

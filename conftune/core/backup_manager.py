@@ -17,8 +17,9 @@ from conftune.core.logger import get_logger
 class BackupManager:
     """Manages pre-tune configuration snapshots and rollbacks."""
 
-    def __init__(self, backup_dir: Optional[str] = None):
+    def __init__(self, backup_dir: Optional[str] = None, safety: Optional[Any] = None):
         self.logger = get_logger()
+        self.safety = safety
         if backup_dir:
             self.base_dir = backup_dir
         elif os.geteuid() == 0:
@@ -146,15 +147,21 @@ class BackupManager:
                     self.logger.warning(f"Backup file missing: {backup_file}")
                     continue
                 if not dry_run:
-                    os.makedirs(os.path.dirname(orig_path), exist_ok=True)
-                    shutil.copy2(backup_file, orig_path)
+                    if self.safety:
+                        self.safety.copy_file(backup_file, orig_path)
+                    else:
+                        os.makedirs(os.path.dirname(orig_path), exist_ok=True)
+                        shutil.copy2(backup_file, orig_path)
                 restored += 1
                 self.logger.info(f"{'[DRY RUN] Would restore' if dry_run else 'Restored'}: {orig_path}")
             else:
                 # File was newly created by tuning, remove it
                 if os.path.isfile(orig_path):
                     if not dry_run:
-                        os.remove(orig_path)
+                        if self.safety:
+                            self.safety.remove_file(orig_path)
+                        else:
+                            os.remove(orig_path)
                     removed += 1
                     self.logger.info(f"{'[DRY RUN] Would remove newly created' if dry_run else 'Removed'}: {orig_path}")
 
@@ -169,9 +176,13 @@ class BackupManager:
     def _reload_subsystems(self) -> None:
         """Trigger reload of sysctl and systemd after configuration rollback."""
         try:
-            if shutil.which("sysctl"):
-                subprocess.run(["sysctl", "--system"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            if shutil.which("systemctl"):
-                subprocess.run(["systemctl", "daemon-reload"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if self.safety:
+                self.safety.run_command(["sysctl", "--system"])
+                self.safety.run_command(["systemctl", "daemon-reload"])
+            else:
+                if shutil.which("sysctl"):
+                    subprocess.run(["sysctl", "--system"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if shutil.which("systemctl"):
+                    subprocess.run(["systemctl", "daemon-reload"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             self.logger.warning(f"Error refreshing subsystems during rollback: {e}")

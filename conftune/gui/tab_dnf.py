@@ -116,8 +116,8 @@ class DNFTab(QWidget):
 
     def _apply_dnf(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Modifying DNF configuration in /etc/dnf/dnf.conf")
-            return
+            if not prompt_root_required(self, "Modifying DNF configuration in /etc/dnf/dnf.conf", self.safety):
+                return
 
         ok, msg = self.dnf_tuner.apply_optimizations(
             max_parallel_downloads=self.spin_dl.value(),
@@ -129,8 +129,8 @@ class DNFTab(QWidget):
 
     def _clean_dnf_cache(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Purging system DNF package and metadata cache")
-            return
+            if not prompt_root_required(self, "Purging system DNF package and metadata cache", self.safety):
+                return
 
         ok, msg = self.dnf_tuner.clean_cache()
         QMessageBox.information(self, "DNF Cache Clean", msg)

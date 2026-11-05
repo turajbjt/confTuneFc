@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -32,7 +33,15 @@ class SystemdTab(QWidget):
         self._init_ui()
 
     def _init_ui(self):
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(14)
 
@@ -79,6 +88,9 @@ class SystemdTab(QWidget):
         self.table_blame.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table_blame.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.table_blame.setAlternatingRowColors(True)
+        self.table_blame.setMinimumHeight(240)
+        self.table_blame.verticalHeader().setDefaultSectionSize(30)
+        self.table_blame.verticalHeader().setVisible(False)
         layout.addWidget(self.table_blame)
 
         # Server Daemon Recommendations
@@ -92,9 +104,16 @@ class SystemdTab(QWidget):
         self.table_rec.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table_rec.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table_rec.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.table_rec.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_rec.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+        self.table_rec.setColumnWidth(3, 175)
+        self.table_rec.setMinimumHeight(260)
+        self.table_rec.verticalHeader().setDefaultSectionSize(42)
+        self.table_rec.verticalHeader().setVisible(False)
         self.table_rec.setAlternatingRowColors(True)
         layout.addWidget(self.table_rec)
+
+        scroll.setWidget(container)
+        main_layout.addWidget(scroll)
 
         self._refresh()
 
@@ -122,6 +141,9 @@ class SystemdTab(QWidget):
             action_text = "Disable" if r["active"] else "Enable"
             btn_label = action_text if self.safety.is_root else f"🔒 {action_text} (Root)"
             btn_toggle = QPushButton(btn_label)
+            btn_toggle.setFixedHeight(30)
+            btn_toggle.setMinimumWidth(150)
+            btn_toggle.setStyleSheet("font-size: 12px; font-weight: 600; padding: 4px 10px;")
             if r["active"]:
                 btn_toggle.setProperty("class", "destructive")
             btn_toggle.clicked.connect(lambda ch, s=r["service"], act=r["active"]: self._toggle_service(s, not act))
@@ -133,8 +155,8 @@ class SystemdTab(QWidget):
 
     def _toggle_service(self, service: str, enable: bool):
         if not self.safety.is_root:
-            prompt_root_required(self, f"Modifying system service '{service}'")
-            return
+            if not prompt_root_required(self, f"Modifying system service '{service}'", self.safety):
+                return
 
         ok, msg = self.systemd_tuner.set_service_state(service, enable)
         QMessageBox.information(self, "Service Updated", msg)
@@ -142,8 +164,8 @@ class SystemdTab(QWidget):
 
     def _apply_journald(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Configuring systemd-journald limits in /etc/systemd/journald.conf.d")
-            return
+            if not prompt_root_required(self, "Configuring systemd-journald limits in /etc/systemd/journald.conf.d", self.safety):
+                return
 
         size = self.combo_j.currentText()
         ok, msg = self.systemd_tuner.configure_journald_limit(size)

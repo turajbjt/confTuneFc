@@ -222,8 +222,8 @@ class SpecializedTab(QWidget):
 
     def _optimize_virtualmin(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Optimize Virtualmin Hosting Stack")
-            return
+            if not prompt_root_required(self, "Optimize Virtualmin Hosting Stack", self.safety):
+                return
         ok1, msg1 = self.server_tuner.optimize_virtualmin_stack()
         prof = get_profile("virtualmin")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Virtualmin Hosting")
@@ -231,8 +231,8 @@ class SpecializedTab(QWidget):
 
     def _optimize_containers(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Optimize Container Host Stack")
-            return
+            if not prompt_root_required(self, "Optimize Container Host Stack", self.safety):
+                return
         ok1, msg1 = self.server_tuner.optimize_containers_stack()
         prof = get_profile("container_host")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Container Host")
@@ -240,8 +240,8 @@ class SpecializedTab(QWidget):
 
     def _optimize_virtualization(self):
         if not self.safety.is_root:
-            prompt_root_required(self, "Optimize Virtualization Hypervisor")
-            return
+            if not prompt_root_required(self, "Optimize Virtualization Hypervisor", self.safety):
+                return
         ok1, msg1 = self.server_tuner.optimize_virtualization_host()
         prof = get_profile("virtualization_host")
         ok2, msg2 = self.sysctl_tuner.apply_parameters(prof["sysctl"], profile_name="Virtualization Host")

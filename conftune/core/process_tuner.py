@@ -77,12 +77,12 @@ class ProcessTuner:
             return True, f"[DRY RUN] Would write {OOMD_CONF_PATH} with:\n{content}"
 
         try:
-            os.makedirs(os.path.dirname(OOMD_CONF_PATH), exist_ok=True)
-            with open(OOMD_CONF_PATH, "w", encoding="utf-8") as f:
-                f.write(content)
+            ok_w, msg_w = self.safety.write_file(OOMD_CONF_PATH, content)
+            if not ok_w:
+                return False, msg_w
 
             # Reload oomd
-            subprocess.run(["systemctl", "restart", "systemd-oomd"], check=False)
+            self.safety.run_command(["systemctl", "restart", "systemd-oomd"])
             self.logger.info(f"Applied systemd-oomd tuning in {OOMD_CONF_PATH}.")
             return True, f"systemd-oomd limits configured: Pressure={memory_pressure}, Swap={swap_limit}."
         except Exception as e:
@@ -115,9 +115,9 @@ class ProcessTuner:
                 score_file = f"/proc/{pid}/oom_score_adj"
                 if os.path.isfile(score_file):
                     try:
-                        with open(score_file, "w") as f:
-                            f.write(str(score_adjust))
-                        applied += 1
+                        ok_w, _ = self.safety.write_file(score_file, str(score_adjust))
+                        if ok_w:
+                            applied += 1
                     except Exception:
                         pass
 

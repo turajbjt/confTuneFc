@@ -249,8 +249,8 @@ class PresetsTab(QWidget):
             return
 
         if not self.safety.is_root:
-            prompt_root_required(self, "Apply External Preset to System Host")
-            return
+            if not prompt_root_required(self, "Apply External Preset to System Host", self.safety):
+                return
 
         dry_run = not self.safety.is_root
         old_dry = self.preset_mgr.safety.dry_run

@@ -85,8 +85,9 @@ class AutostartTuner:
                 new_lines.append("Hidden=true\n")
                 new_lines.append("X-GNOME-Autostart-enabled=false\n")
 
-            with open(entry_path, "w", encoding="utf-8") as f:
-                f.writelines(new_lines)
+            ok_w, msg_w = self.safety.write_file(entry_path, "".join(new_lines))
+            if not ok_w:
+                return False, msg_w
 
             action = "enabled" if enable else "disabled"
             self.logger.info(f"Autostart launcher '{os.path.basename(entry_path)}' {action}.")
@@ -121,9 +122,9 @@ class AutostartTuner:
             return True, f"[DRY RUN] Would write {COREDUMP_CONF_PATH} with:\n{content}"
 
         try:
-            os.makedirs(os.path.dirname(COREDUMP_CONF_PATH), exist_ok=True)
-            with open(COREDUMP_CONF_PATH, "w", encoding="utf-8") as f:
-                f.write(content)
+            ok_w, msg_w = self.safety.write_file(COREDUMP_CONF_PATH, content)
+            if not ok_w:
+                return False, msg_w
             self.logger.info(f"Applied core dump storage limit ({max_use}) in {COREDUMP_CONF_PATH}.")
             return True, f"Core dump disk storage ceiling set to {max_use}."
         except Exception as e:
@@ -157,7 +158,7 @@ class AutostartTuner:
         count = 0
         for s in services:
             try:
-                subprocess.run(["systemctl", "enable" if enable else "disable", "--now", s], check=False)
+                self.safety.run_command(["systemctl", "enable" if enable else "disable", "--now", s])
                 count += 1
             except Exception:
                 pass
