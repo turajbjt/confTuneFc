@@ -76,8 +76,22 @@ echo "==> Building universal binary RPM package..."
     "${RPMBUILD_DIR}/SPECS/conftune-fc.spec"
 
 echo "==> Moving generated RPM artifacts to dist/..."
+# Purge older RPMs so only the current release artifacts exist
+rm -f "${DIST_DIR}"/*.rpm "${DIST_DIR}"/SHA256SUMS
+
 find "${RPMBUILD_DIR}/RPMS" -type f -name "*.rpm" -exec cp {} "${DIST_DIR}/" \;
 find "${RPMBUILD_DIR}/SRPMS" -type f -name "*.src.rpm" -exec cp {} "${DIST_DIR}/" \;
 
-echo "==> Universal RPM Build Complete! Artifacts:"
+# Generate SHA256 checksums for the current release
+echo "==> Generating SHA256SUMS..."
+(
+    cd "${DIST_DIR}"
+    sha256sum *.rpm > SHA256SUMS
+    cp SHA256SUMS "${ROOT_DIR}/SHA256SUMS"
+)
+
+# Clean up build tree intermediates
+rm -rf "${RPMBUILD_DIR}"
+
+echo "==> Universal RPM Build Complete! Current Release Artifacts:"
 ls -lh "${DIST_DIR}"/*.rpm
