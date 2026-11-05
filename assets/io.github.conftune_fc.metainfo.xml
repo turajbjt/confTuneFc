@@ -51,6 +51,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.2" date="2026-11-05">
+      <description>
+        <p>Privilege escalation and GUI presentation release:</p>
+        <ul>
+          <li>Integrated proven PolicyKit elevation with asynchronous handshake and XWayland authorization</li>
+          <li>Fixed action button dimensions and text truncation in Boot and Systemd optimizer</li>
+          <li>Refined Adwaita Dark styling and status pill badges</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-11-05">
       <description>
         <p>Initial universal production release of ConfTune FC for Fedora, Rocky Linux, and CentOS:</p>

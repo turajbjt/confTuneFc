@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.1
+Version:        1.0.2
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,12 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.2-1
+- Fix PolicyKit privilege escalation with proven confclean-fc asynchronous handshake
+- Fix Wayland/XWayland display authorization with xhost localroot and QT_QPA_PLATFORM=xcb
+- Fix microscopic action button sizing and text truncation in Boot & Systemd tab
+- Add AppStream releases metadata and update versioning pipeline
+
 * Wed Nov 04 2026 James Turansky <turajb@gmail.com> - 1.0.0-1
 - Initial universal release of ConfTune FC for Fedora, Rocky Linux, AlmaLinux, CentOS Stream, and RHEL
 - Pure Python source package with noarch architecture and on-target bytecode compilation
