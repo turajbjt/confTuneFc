@@ -78,6 +78,14 @@ ln -sf conftune-fc %{buildroot}%{_bindir}/conftune
 mkdir -p %{buildroot}%{_datadir}/polkit-1/actions
 install -m 644 packaging/io.github.conftune_fc.policy %{buildroot}%{_datadir}/polkit-1/actions/io.github.conftune_fc.policy
 
+# Install AppStream metainfo
+mkdir -p %{buildroot}%{_datadir}/metainfo
+install -m 644 assets/io.github.conftune_fc.metainfo.xml %{buildroot}%{_datadir}/metainfo/io.github.conftune_fc.metainfo.xml
+
+# Install systemd service unit
+mkdir -p %{buildroot}%{_prefix}/lib/systemd/system
+install -m 644 packaging/systemd/conftune-powerd.service %{buildroot}%{_prefix}/lib/systemd/system/conftune-powerd.service
+
 # Install desktop entry
 mkdir -p %{buildroot}%{_datadir}/applications
 install -m 644 conftune.desktop %{buildroot}%{_datadir}/applications/conftune-fc.desktop
@@ -131,6 +139,8 @@ fi
 %{_datadir}/icons/hicolor/scalable/apps/conftune-fc.svg
 %{_datadir}/icons/hicolor/*/apps/conftune-fc.png
 %{_datadir}/polkit-1/actions/io.github.conftune_fc.policy
+%{_datadir}/metainfo/io.github.conftune_fc.metainfo.xml
+%{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
 * Wed Nov 04 2026 James Turansky <turajb@gmail.com> - 1.0.0-1

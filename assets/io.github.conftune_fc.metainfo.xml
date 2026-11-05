@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.conftune_fc</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>ConfTune FC</name>
+  <summary>System setup, configuration and performance tuner for Fedora, Rocky Linux, and CentOS</summary>
+  <developer id="com.builddesigncreate">
+    <name>BuildDesignCreate.com</name>
+  </developer>
+
+  <description>
+    <p>
+      ConfTune FC is a safety-first configuration, setup, and performance tuning application
+      built specifically for RPM-based Linux distributions, including Fedora Workstation &amp; Server,
+      Rocky Linux, CentOS Stream, AlmaLinux, and RHEL.
+    </p>
+    <p>
+      Featuring both a modern GNOME Adwaita Dark interface and a headless CLI for remote server
+      administration, ConfTune FC optimizes kernel sysctl parameters, DNF package concurrency,
+      storage TRIM maintenance, CPU power scaling, systemd-oomd memory pressure, and specialized
+      workloads including Docker/Podman, KVM virtualization, and Virtualmin web hosting.
+    </p>
+    <ul>
+      <li>Automatic pre-tune snapshots with instant 1-click rollback</li>
+      <li>Workload presets: Workstation, Gaming low-latency, Server, Database, and Web</li>
+      <li>Two-tier privilege separation with native PolicyKit (pkexec) elevation</li>
+      <li>DNF4 and DNF5 multi-threaded download acceleration and mirror optimization</li>
+      <li>Portable configuration bundles, standalone deploy scripts, and Ansible Playbooks</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">conftune-fc.desktop</launchable>
+  <icon type="stock">conftune-fc</icon>
+
+  <url type="homepage">https://github.com/turajbjt/confTuneFc</url>
+  <url type="bugtracker">https://github.com/turajbjt/confTuneFc/issues</url>
+  <url type="vcs-browser">https://github.com/turajbjt/confTuneFc</url>
+
+  <provides>
+    <binary>conftune-fc</binary>
+    <binary>conftune</binary>
+  </provides>
+
+  <categories>
+    <category>System</category>
+    <category>Settings</category>
+    <category>HardwareSettings</category>
+  </categories>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="1.0.0" date="2026-11-05">
+      <description>
+        <p>Initial universal production release of ConfTune FC for Fedora, Rocky Linux, and CentOS:</p>
+        <ul>
+          <li>16 specialized GUI views with GNOME 45+ Adwaita Dark styling</li>
+          <li>Two-tier privilege boundary locking administrative write operations</li>
+          <li>Ansible Playbook and standalone shell script generators</li>
+          <li>Dual-path DNF4 and DNF5 acceleration</li>
+          <li>Full unit test coverage with 112 passing tests</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -55,6 +55,31 @@ class PowerTab(QWidget):
         h_lay.addWidget(lbl_sub)
         layout.addWidget(header)
 
+        # Dynamic Power & Battery Card
+        auto_card = QFrame()
+        auto_card.setProperty("class", "card")
+        a_lay = QVBoxLayout(auto_card)
+        a_lay.setSpacing(10)
+        a_lay.setContentsMargins(16, 14, 16, 14)
+
+        lbl_a_h = QLabel("🔋 Dynamic AC / Battery Power Policy")
+        lbl_a_h.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
+        a_lay.addWidget(lbl_a_h)
+
+        h_ac = QHBoxLayout()
+        self.lbl_power_source = QLabel("Power Source: Detecting...")
+        self.lbl_power_source.setStyleSheet("color: #dedede; font-weight: 500;")
+        h_ac.addWidget(self.lbl_power_source)
+        h_ac.addStretch()
+
+        auto_btn_lbl = "⚡ Apply Dynamic Power Profile" if self.safety.is_root else "🔒 Apply Dynamic Power Profile (Requires Root)"
+        self.btn_auto_power = QPushButton(auto_btn_lbl)
+        self.btn_auto_power.setProperty("class", "primary")
+        self.btn_auto_power.clicked.connect(self._apply_auto_power)
+        h_ac.addWidget(self.btn_auto_power)
+        a_lay.addLayout(h_ac)
+        layout.addWidget(auto_card)
+
         # 1. Scaling Governor Card
         gov_card = QFrame()
         gov_card.setProperty("class", "card")
@@ -176,6 +201,26 @@ class PowerTab(QWidget):
         self.lbl_cur_thp.setText(f"Active THP: {thp.get('active', 'unknown')}")
         if thp.get("active") in ["always", "madvise", "never"]:
             self.combo_thp.setCurrentText(thp.get("active"))
+
+        # Dynamic Power Source
+        try:
+            from conftune.core.power_daemon import PowerDaemon
+            pd = PowerDaemon(self.power_tuner, self.safety)
+            p_info = pd.detect_power_state()
+            state_str = "AC / Mains Power" if p_info["state"] == "ac" else f"Battery ({p_info.get('battery_level', '?')}%)"
+            self.lbl_power_source.setText(f"Detected Power Source: {state_str}")
+        except Exception:
+            self.lbl_power_source.setText("Detected Power Source: AC / Standard")
+
+    def _apply_auto_power(self):
+        if not self.safety.is_root:
+            prompt_root_required(self, "Apply Dynamic Power Profile")
+            return
+        from conftune.core.power_daemon import PowerDaemon
+        pd = PowerDaemon(self.power_tuner, self.safety)
+        ok, msg, info = pd.run_once()
+        QMessageBox.information(self, "Dynamic Power Profile", msg)
+        self._refresh()
 
     def _apply_governor(self):
         if not self.safety.is_root:

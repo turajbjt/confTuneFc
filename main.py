@@ -60,6 +60,8 @@ Examples:
     parser.add_argument("--governor", metavar="GOV", help="[Requires Sudo] Set CPU scaling governor (performance, powersave, schedutil, ondemand)")
     parser.add_argument("--epp", metavar="MODE", help="[Requires Sudo] Set CPU EPP mode (performance, balance_performance, balance_power, power)")
     parser.add_argument("--thp", metavar="MODE", help="[Requires Sudo] Set Transparent Huge Pages (always, madvise, never)")
+    parser.add_argument("--auto-power", action="store_true", help="[Requires Sudo] Adapt CPU governor and EPP automatically based on AC/Battery state once")
+    parser.add_argument("--power-daemon", action="store_true", help="[Requires Sudo] Run continuous power daemon loop for systemd service")
     parser.add_argument("--protect-process", metavar="NAME", help="[Requires Sudo] Adjust OOM killer score to protect process from termination")
     parser.add_argument("--oom-score", type=int, default=-500, help="OOM score adjustment (-1000 to 1000, default -500)")
     parser.add_argument("--tune-oomd", action="store_true", help="Configure systemd-oomd memory pressure and swap thresholds [Requires Sudo with --apply]")
@@ -96,6 +98,8 @@ Examples:
         bool(args.governor),
         bool(args.epp),
         bool(args.thp),
+        args.auto_power,
+        args.power_daemon,
         bool(args.protect_process),
         args.tune_oomd,
         args.disable_telemetry,

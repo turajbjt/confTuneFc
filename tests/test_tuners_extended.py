@@ -517,5 +517,32 @@ class TestPresetManagerExtended(unittest.TestCase):
         self.assertIn("throughput-performance", content)
 
 
+class TestPowerDaemonExtended(unittest.TestCase):
+    def setUp(self):
+        self.safety = SafetyEngine(dry_run=True)
+        self.power_tuner = PowerTuner(safety=self.safety)
+
+    def test_power_daemon_lifecycle(self):
+        from conftune.core.power_daemon import PowerDaemon
+        daemon = PowerDaemon(power_tuner=self.power_tuner, safety=self.safety)
+        state_info = daemon.detect_power_state()
+        self.assertIn("state", state_info)
+        self.assertIn(state_info["state"], ["ac", "battery"])
+
+        # Test profile applications
+        ok_ac, msg_ac = daemon.apply_profile("ac")
+        self.assertTrue(ok_ac)
+        self.assertIn("AC", msg_ac)
+
+        ok_bat, msg_bat = daemon.apply_profile("battery")
+        self.assertTrue(ok_bat)
+        self.assertIn("BATTERY", msg_bat)
+
+        # Test run_once
+        ok_once, msg_once, info = daemon.run_once()
+        self.assertTrue(ok_once)
+        self.assertIn("state", info)
+
+
 if __name__ == "__main__":
     unittest.main()

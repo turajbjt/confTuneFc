@@ -128,6 +128,7 @@ class TestGUITabs(unittest.TestCase):
         self.assertIn("🔒", tab_power.btn_set_gov.text())
         self.assertIn("🔒", tab_power.btn_set_epp.text())
         self.assertIn("🔒", tab_power.btn_set_thp.text())
+        self.assertIn("🔒", tab_power.btn_auto_power.text())
 
         tab_proc = ProcessTab(self.process_tuner, safety_user)
         self.assertIn("🔒", tab_proc.btn_apply_oomd.text())
@@ -168,6 +169,7 @@ class TestGUITabs(unittest.TestCase):
 
         tab_power = PowerTab(self.power_tuner, safety_root)
         self.assertNotIn("🔒", tab_power.btn_set_gov.text())
+        self.assertNotIn("🔒", tab_power.btn_auto_power.text())
 
         tab_proc = ProcessTab(self.process_tuner, safety_root)
         self.assertNotIn("🔒", tab_proc.btn_apply_oomd.text())
@@ -333,12 +335,14 @@ class TestGUITabs(unittest.TestCase):
         tab._apply_governor()
         tab._apply_epp()
         tab._apply_thp()
+        tab._apply_auto_power()
 
         # Privileged
         self.safety.is_root = True
         tab._apply_governor()
         tab._apply_epp()
         tab._apply_thp()
+        tab._apply_auto_power()
 
     def test_process_tab(self):
         tab = ProcessTab(self.process_tuner, self.safety)

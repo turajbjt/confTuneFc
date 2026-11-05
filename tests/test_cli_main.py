@@ -45,6 +45,8 @@ class TestCLIExecution(unittest.TestCase):
             "governor": None,
             "epp": None,
             "thp": None,
+            "auto_power": False,
+            "power_daemon": False,
             "protect_process": None,
             "oom_score": -500,
             "tune_oomd": False,
@@ -198,6 +200,13 @@ class TestCLIExecution(unittest.TestCase):
         with patch("sys.stdout", out_t):
             run_cli(args_t)
         self.assertIn("Setting Transparent Huge Pages", out_t.getvalue())
+
+        # Auto Power
+        args_ap = self._make_args(auto_power=True, dry_run=True)
+        out_ap = io.StringIO()
+        with patch("sys.stdout", out_ap):
+            run_cli(args_ap)
+        self.assertIn("Automatic Power Profile Applied", out_ap.getvalue())
 
     def test_cli_process_and_oomd(self):
         # Protect process

@@ -45,6 +45,8 @@ def run_cli(args: argparse.Namespace) -> None:
         bool(getattr(args, "governor", None)),
         bool(getattr(args, "epp", None)),
         bool(getattr(args, "thp", None)),
+        getattr(args, "auto_power", False),
+        getattr(args, "power_daemon", False),
         bool(getattr(args, "protect_process", None)),
         getattr(args, "tune_oomd", False),
         getattr(args, "disable_telemetry", False),
@@ -64,6 +66,8 @@ def run_cli(args: argparse.Namespace) -> None:
         or bool(getattr(args, "governor", None))
         or bool(getattr(args, "epp", None))
         or bool(getattr(args, "thp", None))
+        or getattr(args, "auto_power", False)
+        or getattr(args, "power_daemon", False)
         or bool(getattr(args, "protect_process", None))
     )
     if root_write_requested and not safety.is_root and not args.dry_run:
@@ -248,6 +252,22 @@ def run_cli(args: argparse.Namespace) -> None:
         print(f"\n==> Setting Transparent Huge Pages (THP) to '{thp_mode}' (dry-run: {safety.dry_run})...")
         ok, msg = power_tuner.set_thp_mode(thp_mode)
         print(f"  {msg}")
+        return
+
+    # Power: Auto / Dynamic Daemon
+    if getattr(args, "auto_power", False):
+        from conftune.core.power_daemon import PowerDaemon
+        daemon = PowerDaemon(power_tuner=power_tuner, safety=safety)
+        ok, msg, info = daemon.run_once()
+        print(f"\n==> Automatic Power Profile Applied (Source: {info['state'].upper()}):")
+        print(f"  {msg}")
+        return
+
+    if getattr(args, "power_daemon", False):
+        from conftune.core.power_daemon import PowerDaemon
+        daemon = PowerDaemon(power_tuner=power_tuner, safety=safety)
+        print("\n==> Starting ConfTune FC Dynamic Power & EPP Daemon...")
+        daemon.run_daemon(interval_seconds=15)
         return
 
     # Process: Protect OOM
