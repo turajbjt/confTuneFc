@@ -88,19 +88,55 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 ### Requirements
 - **Fedora 40/41/44/45+**, **Rocky Linux 8/9/10**, or **CentOS Stream 9/10**
 - Python 3.9+
-- `python3-pyqt6` (required for graphical interface; CLI runs on standard Python standard library)
+- `python3-pyqt6` (required for graphical interface; headless CLI runs on the Python standard library with no extra packages needed)
 
-### Install Dependencies
+> [!TIP]
+> If PyQt6 is not installed on your system, ConfTune FC can still run in headless CLI mode via `--status`, `--apply-profile`, etc., or will display an informative prompt with the exact command to install PyQt6.
+
+### 1. Install via RPM Package (Recommended)
+You can directly install the pre-built unified `.rpm` package included in the repository using `dnf` or `rpm` (compatible across Fedora 40+, CentOS Stream, Rocky Linux, and RHEL):
 ```bash
-# Fedora / Rocky Linux / CentOS Stream / RHEL:
-sudo dnf install python3-pyqt6
+# Install binary RPM locally with automatic dependency resolution:
+sudo dnf install ./conftune-fc-1.0.4-1.noarch.rpm
+
+# Or with rpm:
+sudo rpm -ivh ./conftune-fc-1.0.4-1.noarch.rpm
 ```
 
-### Run ConfTune FC
+#### Rebuilding or Inspecting from Source RPM (SRPM):
+The repository also includes the official source RPM (`conftune-fc-1.0.4-1.src.rpm`), enabling full auditability, reproducible rebuilds, and mock/chroot building:
+```bash
+# Rebuild binary RPM directly from the source RPM:
+rpmbuild --rebuild ./conftune-fc-1.0.4-1.src.rpm
+
+# Or inspect the spec file and source archive:
+rpm -ivh ./conftune-fc-1.0.4-1.src.rpm
+```
+
+Verify package integrity using the included checksums:
+```bash
+sha256sum -c SHA256SUMS
+```
+
+Once installed, launch ConfTune FC from your application menu or directly in terminal:
+```bash
+conftune-fc        # or simply: conftune
+```
+
+To build both binary and source RPMs at any time:
+```bash
+./packaging/build-rpm.sh
+```
+
+### 2. Run Directly from Source (No Installation Needed)
+Kick off the application directly from the repository:
 ```bash
 # Clone the repository
 git clone https://github.com/turajbjt/confTuneFc.git
 cd confTuneFc
+
+# Install dependencies if using graphical mode:
+sudo dnf install python3-pyqt6
 
 # Launch Graphical Desktop Interface:
 python3 main.py
@@ -252,7 +288,7 @@ sudo dnf install rpm-build
 ./packaging/build-rpm.sh
 
 # Install generated RPM
-sudo dnf install dist/conftune-fc-*.noarch.rpm
+sudo dnf install ./conftune-fc-1.0.4-1.noarch.rpm
 ```
 
 ---

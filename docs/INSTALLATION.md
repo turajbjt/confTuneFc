@@ -22,7 +22,51 @@ This guide provides instructions for installing, configuring, running, and unins
 
 ## 📥 Installation Methods
 
-### Method 1: Run Directly from Source (Fastest)
+### Method 1: Install via RPM Package (Recommended)
+
+Installing the pre-built `.rpm` package provides full system integration: it installs `/usr/bin/conftune` and `/usr/bin/conftune-fc` into system PATH, configures system desktop launchers, installs Polkit privilege escalation policies, and installs scalable high-resolution application icons for GNOME, KDE, and XFCE.
+
+You can install the pre-built unified `.rpm` package directly from this repository (compatible across Fedora 40+, CentOS Stream, Rocky Linux, and RHEL):
+
+```bash
+# Using DNF with automatic dependency resolution:
+sudo dnf install ./conftune-fc-1.0.4-1.noarch.rpm
+
+# Or directly with RPM:
+sudo rpm -ivh ./conftune-fc-1.0.4-1.noarch.rpm
+```
+
+#### Rebuilding or Inspecting from Source RPM (SRPM):
+The repository also provides the official source RPM (`conftune-fc-1.0.4-1.src.rpm`), allowing you to inspect the spec file, audit source tarballs, or rebuild binary packages in isolated mock/chroot environments:
+
+```bash
+# Rebuild binary RPM from source package:
+rpmbuild --rebuild ./conftune-fc-1.0.4-1.src.rpm
+
+# Or inspect the spec file and source archive:
+rpm -ivh ./conftune-fc-1.0.4-1.src.rpm
+```
+
+Verify package integrity using the included SHA256 checksums:
+```bash
+sha256sum -c SHA256SUMS
+```
+
+Once installed, launch ConfTune FC from your application grid or from any terminal:
+```bash
+conftune-fc
+# or simply:
+conftune
+```
+
+To upgrade an existing RPM package installation in the future:
+```bash
+sudo dnf upgrade ./conftune-fc-1.0.4-1.noarch.rpm
+```
+
+---
+
+### Method 2: Run Directly from Source (No Installation Needed)
 
 ConfTune FC can be run directly from source without installing anything into system directories:
 
@@ -49,9 +93,9 @@ ConfTune FC can be run directly from source without installing anything into sys
 
 ---
 
-### Method 2: Install Desktop Launcher (Local User)
+### Method 3: Install Desktop Launcher (Local User)
 
-To integrate ConfTune FC into your GNOME, KDE, or XFCE application menu:
+To integrate ConfTune FC into your GNOME, KDE, or XFCE application menu when running from source:
 
 ```bash
 cd confTuneFc
@@ -65,9 +109,9 @@ This installs:
 
 ---
 
-### Method 3: Build & Install Native RPM Package
+### Method 4: Build Native RPM Package from Source
 
-To package ConfTune FC as a system-wide RPM package:
+To build binary and source RPMs at any time:
 
 1. **Install RPM build tools**:
    ```bash
@@ -77,11 +121,6 @@ To package ConfTune FC as a system-wide RPM package:
 2. **Run the build script**:
    ```bash
    ./packaging/build-rpm.sh
-   ```
-
-3. **Install the generated package**:
-   ```bash
-   sudo dnf install dist/conftune-fc-*.noarch.rpm
    ```
 
 The universal package is compatible across **Fedora 40+**, **Rocky Linux 8/9/10**, **CentOS Stream 8/9/10**, **AlmaLinux**, and **RHEL**. It installs:
@@ -95,14 +134,16 @@ The universal package is compatible across **Fedora 40+**, **Rocky Linux 8/9/10*
 
 ## 🗑️ Uninstallation
 
-### Uninstall Local Desktop Launcher
-```bash
-./uninstall-desktop.sh
-```
-
 ### Uninstall RPM Package
 ```bash
 sudo dnf remove conftune-fc
+# or:
+sudo rpm -e conftune-fc
+```
+
+### Uninstall Local Desktop Launcher
+```bash
+./uninstall-desktop.sh
 ```
 
 ### Clean Up Local Snapshots and Logs (Optional)

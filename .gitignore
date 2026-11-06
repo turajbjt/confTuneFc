@@ -8,6 +8,7 @@ dist/
 rpmbuild/
 packaging/rpmbuild-runner
 *.rpm
+!conftune-fc-*.rpm
 *.tar.gz
 *.egg-info/
 .eggs/

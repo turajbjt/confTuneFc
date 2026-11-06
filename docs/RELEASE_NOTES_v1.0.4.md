@@ -51,6 +51,6 @@
 To upgrade to **v1.0.4** on Fedora, Rocky Linux, CentOS Stream, or RHEL:
 
 ```bash
-sudo dnf update -y ./dist/conftune-fc-1.0.4-1.noarch.rpm
+sudo dnf update -y ./conftune-fc-1.0.4-1.noarch.rpm
 ```
-*(or via rpm: `sudo rpm -Uvh ./dist/conftune-fc-1.0.4-1.noarch.rpm`)*
+*(or via rpm: `sudo rpm -Uvh ./conftune-fc-1.0.4-1.noarch.rpm`)*
