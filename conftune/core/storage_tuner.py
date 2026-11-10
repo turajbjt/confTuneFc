@@ -54,6 +54,24 @@ class StorageTuner:
         except Exception as e:
             return False, str(e)
 
+    def disable_fstrim_timer(self) -> Tuple[bool, str]:
+        """Disable and stop fstrim.timer."""
+        valid, msg = self.safety.verify_privilege("Disabling fstrim.timer")
+        if not valid:
+            return False, msg
+
+        if self.safety.dry_run:
+            return True, "[DRY RUN] Would execute: systemctl disable --now fstrim.timer"
+
+        try:
+            res = self.safety.run_command(["systemctl", "disable", "--now", "fstrim.timer"], timeout=5)
+            if res.returncode == 0:
+                self.logger.info("Disabled and stopped fstrim.timer.")
+                return True, "SSD/NVMe TRIM timer disabled."
+            return False, res.stderr.strip()
+        except Exception as e:
+            return False, str(e)
+
     def run_fstrim_now(self) -> Tuple[bool, str]:
         """Run manual discard operation across all mounted filesystems."""
         valid, msg = self.safety.verify_privilege("Executing fstrim")
@@ -154,3 +172,28 @@ class StorageTuner:
             return True, "ZRAM generator configuration saved."
         except Exception as e:
             return False, str(e)
+
+    def is_zram_customized(self) -> bool:
+        """Check if custom ZRAM generator override file exists."""
+        return os.path.isfile(ZRAM_CONF_PATH)
+
+    def restore_default_zram(self) -> Tuple[bool, str]:
+        """Restore default system ZRAM generator by removing /etc/systemd/zram-generator.conf."""
+        valid, msg = self.safety.verify_privilege("Restoring default ZRAM configuration")
+        if not valid:
+            return False, msg
+
+        if os.path.isfile(ZRAM_CONF_PATH):
+            self.backup_mgr.create_snapshot(
+                profile_name="zram_pre_restore",
+                target_paths=[ZRAM_CONF_PATH],
+                notes="Backup before restoring default ZRAM generator",
+                dry_run=self.safety.dry_run,
+            )
+
+        ok_rm, msg_rm = self.safety.remove_file(ZRAM_CONF_PATH)
+        if not ok_rm:
+            return False, f"Failed to remove {ZRAM_CONF_PATH}: {msg_rm}"
+
+        self.logger.info("Restored default ZRAM generator configuration.")
+        return True, "Removed /etc/systemd/zram-generator.conf and restored Fedora default ZRAM settings."

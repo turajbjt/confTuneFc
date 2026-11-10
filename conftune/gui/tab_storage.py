@@ -104,6 +104,10 @@ class StorageTab(QWidget):
         lbl_z_head.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
         z_lay.addWidget(lbl_z_head)
 
+        self.lbl_zram_status = QLabel("Checking ZRAM configuration...")
+        self.lbl_zram_status.setStyleSheet("color: #dedede; font-size: 12px;")
+        z_lay.addWidget(self.lbl_zram_status)
+
         lbl_z_desc = QLabel("Configures /etc/systemd/zram-generator.conf using modern zstd compression and optimal size ceilings.")
         lbl_z_desc.setStyleSheet("color: #a0a0a0; font-size: 12px;")
         z_lay.addWidget(lbl_z_desc)
@@ -111,10 +115,27 @@ class StorageTab(QWidget):
         h_zb = QHBoxLayout()
         zram_lbl = "⚡ Configure Optimized ZRAM" if self.safety.is_root else "🔒 Configure Optimized ZRAM (Requires Root)"
         self.btn_apply_zram = QPushButton(zram_lbl)
+        self.btn_apply_zram.setProperty("class", "primary")
         self.btn_apply_zram.clicked.connect(self._configure_zram)
         h_zb.addWidget(self.btn_apply_zram)
+
+        undo_zram_lbl = "↺ Restore Default ZRAM (Undo)" if self.safety.is_root else "🔒 ↺ Restore Default ZRAM (Root)"
+        self.btn_restore_zram = QPushButton(undo_zram_lbl)
+        self.btn_restore_zram.setToolTip("Remove /etc/systemd/zram-generator.conf and restore Fedora system defaults")
+        self.btn_restore_zram.clicked.connect(self._restore_zram)
+        h_zb.addWidget(self.btn_restore_zram)
+
         h_zb.addStretch()
         z_lay.addLayout(h_zb)
+
+        # Gray out root-only storage controls if unprivileged
+        if not self.safety.is_root:
+            self.btn_run_trim.setEnabled(False)
+            self.btn_run_trim.setToolTip("Root privileges required to run filesystem TRIM discard")
+            self.btn_apply_zram.setEnabled(False)
+            self.btn_apply_zram.setToolTip("Root privileges required to configure ZRAM in /etc/systemd/")
+            self.btn_restore_zram.setEnabled(False)
+            self.btn_restore_zram.setToolTip("Root privileges required to restore ZRAM settings in /etc/systemd/")
 
         layout.addWidget(zram_card)
 
@@ -123,9 +144,34 @@ class StorageTab(QWidget):
 
     def _refresh(self):
         f_stat = self.storage_tuner.get_fstrim_status()
-        active_str = "Active" if f_stat["active"] else "Inactive"
-        enabled_str = "Enabled" if f_stat["enabled"] else "Disabled"
-        self.lbl_trim_status.setText(f"Status: {active_str} (Timer: {enabled_str}) - Periodically informs SSD controllers of unused blocks.")
+        is_active = f_stat["active"] or f_stat["enabled"]
+        if is_active:
+            self.lbl_trim_status.setText("Status: 🟢 Active (Weekly background TRIM timer enabled)")
+            self.lbl_trim_status.setStyleSheet("color: #57e389; font-size: 12px; font-weight: 500;")
+            btn_txt = "🛑 Disable TRIM Timer (Default)" if self.safety.is_root else "🔒 Disable TRIM Timer (Root)"
+            self.btn_enable_trim.setText(btn_txt)
+            self.btn_enable_trim.setProperty("class", "destructive")
+        else:
+            self.lbl_trim_status.setText("Status: ⚪ Disabled (Timer inactive)")
+            self.lbl_trim_status.setStyleSheet("color: #99c1f1; font-size: 12px; font-weight: 500;")
+            btn_txt = "⏱️ Enable Weekly TRIM Timer" if self.safety.is_root else "🔒 Enable Weekly TRIM Timer (Root)"
+            self.btn_enable_trim.setText(btn_txt)
+            self.btn_enable_trim.setProperty("class", "primary")
+
+        self.btn_enable_trim.setEnabled(self.safety.is_root)
+        if not self.safety.is_root:
+            self.btn_enable_trim.setToolTip("Root privileges required to enable/disable weekly TRIM timer")
+
+        self.btn_enable_trim.style().unpolish(self.btn_enable_trim)
+        self.btn_enable_trim.style().polish(self.btn_enable_trim)
+
+        # ZRAM status
+        if self.storage_tuner.is_zram_customized():
+            self.lbl_zram_status.setText("Status: 🟢 Custom ZRAM configuration active (/etc/systemd/zram-generator.conf)")
+            self.lbl_zram_status.setStyleSheet("color: #57e389; font-size: 12px; font-weight: 500;")
+        else:
+            self.lbl_zram_status.setText("Status: ⚪ Fedora default ZRAM settings active (/usr/lib/systemd/zram-generator.conf)")
+            self.lbl_zram_status.setStyleSheet("color: #99c1f1; font-size: 12px; font-weight: 500;")
 
         # Schedulers
         devs = self.storage_tuner.get_disk_schedulers()
@@ -140,11 +186,21 @@ class StorageTab(QWidget):
             self.table_sched.setItem(row, 2, it_avail)
 
     def _enable_trim(self):
-        if not self.safety.is_root:
-            if not prompt_root_required(self, "Enable Weekly TRIM Timer (fstrim.timer)", self.safety):
-                return
-        ok, msg = self.storage_tuner.enable_fstrim_timer()
-        QMessageBox.information(self, "fstrim.timer Enabled", msg)
+        f_stat = self.storage_tuner.get_fstrim_status()
+        is_active = f_stat["active"] or f_stat["enabled"]
+
+        if is_active:
+            if not self.safety.is_root:
+                if not prompt_root_required(self, "Disable Weekly TRIM Timer (fstrim.timer)", self.safety):
+                    return
+            ok, msg = self.storage_tuner.disable_fstrim_timer()
+            QMessageBox.information(self, "fstrim.timer Disabled", msg)
+        else:
+            if not self.safety.is_root:
+                if not prompt_root_required(self, "Enable Weekly TRIM Timer (fstrim.timer)", self.safety):
+                    return
+            ok, msg = self.storage_tuner.enable_fstrim_timer()
+            QMessageBox.information(self, "fstrim.timer Enabled", msg)
         self._refresh()
 
     def _run_trim_now(self):
@@ -167,4 +223,24 @@ class StorageTab(QWidget):
             if not prompt_root_required(self, "Configure ZRAM Compressed Swap Engine", self.safety):
                 return
         ok, msg = self.storage_tuner.configure_zram()
+        self._refresh()
         QMessageBox.information(self, "ZRAM Configured", msg)
+
+    def _restore_zram(self):
+        if not self.safety.is_root:
+            if not prompt_root_required(self, "Restore default system ZRAM configuration", self.safety):
+                return
+
+        reply = QMessageBox.question(
+            self,
+            "Reset ZRAM to Default",
+            "Are you sure you want to remove /etc/systemd/zram-generator.conf and restore Fedora's default ZRAM swap generator settings?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        ok, msg = self.storage_tuner.restore_default_zram()
+        self._refresh()
+        QMessageBox.information(self, "ZRAM Defaults Restored", msg)

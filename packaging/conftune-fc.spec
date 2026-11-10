@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.4
+Version:        1.0.5
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,14 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.5-1
+- Gray out all root-only controls and action buttons when running as an unprivileged user
+- Add granular Default / Undo rollback actions across all tuning modules and GUI tabs
+- Add active state badges (green/gray/red) for custom overrides vs stock defaults
+- Correct GNOME window header button order to [min][max][close] matching standard GNOME Tweaks
+- Fix live DNF parallel downloads detection and checkbox loading state across DNF4/DNF5
+- Optimize layout spacing in Tuning Profiles tab to eliminate whitespace and maximize visible area
+
 * Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.4-1
 - Add beta status disclaimers and caution banners matching confclean-fc
 - Add GUI header beta indicator pill and overview dashboard safety notice

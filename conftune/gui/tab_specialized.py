@@ -122,6 +122,9 @@ class SpecializedTab(QWidget):
         vm_lbl = "⚡ Optimize Virtualmin Hosting Stack" if self.safety.is_root else "🔒 Optimize Virtualmin Hosting Stack (Requires Root)"
         self.btn_opt_vm = QPushButton(vm_lbl)
         self.btn_opt_vm.setProperty("class", "primary")
+        if not self.safety.is_root:
+            self.btn_opt_vm.setEnabled(False)
+            self.btn_opt_vm.setToolTip("Root privileges required to configure Virtualmin firewall and sysctl settings")
         self.btn_opt_vm.clicked.connect(self._optimize_virtualmin)
         h_act.addWidget(self.btn_opt_vm)
         h_act.addStretch()
@@ -170,6 +173,9 @@ class SpecializedTab(QWidget):
         cnt_lbl = "⚡ Optimize Container Host Stack" if self.safety.is_root else "🔒 Optimize Container Host Stack (Requires Root)"
         self.btn_opt_c = QPushButton(cnt_lbl)
         self.btn_opt_c.setProperty("class", "primary")
+        if not self.safety.is_root:
+            self.btn_opt_c.setEnabled(False)
+            self.btn_opt_c.setToolTip("Root privileges required to load kernel modules and configure container host sysctl")
         self.btn_opt_c.clicked.connect(self._optimize_containers)
         h_act.addWidget(self.btn_opt_c)
         h_act.addStretch()
@@ -213,6 +219,9 @@ class SpecializedTab(QWidget):
         virt_lbl = "⚡ Optimize Virtualization Hypervisor" if self.safety.is_root else "🔒 Optimize Virtualization Hypervisor (Requires Root)"
         self.btn_opt_v = QPushButton(virt_lbl)
         self.btn_opt_v.setProperty("class", "primary")
+        if not self.safety.is_root:
+            self.btn_opt_v.setEnabled(False)
+            self.btn_opt_v.setToolTip("Root privileges required to activate tuned virtualization profile and KSM deduplication")
         self.btn_opt_v.clicked.connect(self._optimize_virtualization)
         h_act.addWidget(self.btn_opt_v)
         h_act.addStretch()

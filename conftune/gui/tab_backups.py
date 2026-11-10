@@ -60,6 +60,9 @@ class BackupsTab(QWidget):
         roll_lbl = "⏪ Rollback to Snapshot" if self.safety.is_root else "🔒 Rollback to Snapshot (Requires Root)"
         self.btn_rollback = QPushButton(roll_lbl)
         self.btn_rollback.setProperty("class", "destructive")
+        if not self.safety.is_root:
+            self.btn_rollback.setEnabled(False)
+            self.btn_rollback.setToolTip("Root privileges required to rollback system configuration files from a snapshot")
         self.btn_rollback.clicked.connect(self._perform_rollback)
         h_lay.addWidget(self.btn_rollback)
 

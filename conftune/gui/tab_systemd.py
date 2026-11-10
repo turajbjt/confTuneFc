@@ -62,6 +62,11 @@ class SystemdTab(QWidget):
         h_lay.addStretch()
 
         # Journald size cap selector
+        v_j = QVBoxLayout()
+        self.lbl_j_status = QLabel("Checking journald...")
+        self.lbl_j_status.setStyleSheet("font-size: 11px; font-weight: 500;")
+        v_j.addWidget(self.lbl_j_status)
+
         h_j = QHBoxLayout()
         lbl_j = QLabel("Journald Max Size:")
         lbl_j.setStyleSheet("color: #dedede; font-size: 12px;")
@@ -69,11 +74,27 @@ class SystemdTab(QWidget):
         self.combo_j.addItems(["200M", "300M", "500M", "1G"])
         self.combo_j.setCurrentText("300M")
         btn_apply_j = QPushButton("Apply Limit" if self.safety.is_root else "🔒 Apply Limit (Requires Root)")
+        btn_apply_j.setProperty("class", "primary")
         btn_apply_j.clicked.connect(self._apply_journald)
+
+        reset_j_lbl = "↺ Reset to Default (Undo)" if self.safety.is_root else "🔒 ↺ Reset (Root)"
+        self.btn_reset_j = QPushButton(reset_j_lbl)
+        self.btn_reset_j.setToolTip("Remove /etc/systemd/journald.conf.d/99-conftune.conf and restore system default limits")
+        self.btn_reset_j.clicked.connect(self._reset_journald)
+
+        if not self.safety.is_root:
+            self.combo_j.setEnabled(False)
+            btn_apply_j.setEnabled(False)
+            btn_apply_j.setToolTip("Root privileges required to set journald size limits")
+            self.btn_reset_j.setEnabled(False)
+            self.btn_reset_j.setToolTip("Root privileges required to restore journald limits in /etc/systemd/")
+
         h_j.addWidget(lbl_j)
         h_j.addWidget(self.combo_j)
         h_j.addWidget(btn_apply_j)
-        h_lay.addLayout(h_j)
+        h_j.addWidget(self.btn_reset_j)
+        v_j.addLayout(h_j)
+        h_lay.addLayout(v_j)
 
         layout.addWidget(header)
 
@@ -120,6 +141,14 @@ class SystemdTab(QWidget):
     def _refresh(self):
         self.lbl_boot_time.setText(f"Boot Duration: {self.systemd_tuner.get_boot_time_summary()}")
 
+        # Journald status
+        if self.systemd_tuner.is_journald_configured():
+            self.lbl_j_status.setText("Status: 🟢 Custom journald cap active (/etc/systemd/journald.conf.d/99-conftune.conf)")
+            self.lbl_j_status.setStyleSheet("color: #57e389; font-size: 11px; font-weight: 500;")
+        else:
+            self.lbl_j_status.setText("Status: ⚪ Fedora default journald limits active")
+            self.lbl_j_status.setStyleSheet("color: #99c1f1; font-size: 11px; font-weight: 500;")
+
         # Blame
         items = self.systemd_tuner.get_boot_blame(top_n=15)
         self.table_blame.setRowCount(len(items))
@@ -144,6 +173,9 @@ class SystemdTab(QWidget):
             btn_toggle = QPushButton(btn_label)
             btn_toggle.setFixedHeight(32)
             btn_toggle.setMinimumWidth(160)
+            btn_toggle.setEnabled(self.safety.is_root)
+            if not self.safety.is_root:
+                btn_toggle.setToolTip("Root privileges required to enable/disable system services")
             if r["active"]:
                 btn_toggle.setProperty("class", "destructive")
                 btn_toggle.style().unpolish(btn_toggle)
@@ -171,4 +203,24 @@ class SystemdTab(QWidget):
 
         size = self.combo_j.currentText()
         ok, msg = self.systemd_tuner.configure_journald_limit(size)
+        self._refresh()
         QMessageBox.information(self, "Journald Limit Applied", msg)
+
+    def _reset_journald(self):
+        if not self.safety.is_root:
+            if not prompt_root_required(self, "Restore default systemd-journald limits", self.safety):
+                return
+
+        reply = QMessageBox.question(
+            self,
+            "Reset Journald Limits",
+            "Are you sure you want to remove /etc/systemd/journald.conf.d/99-conftune.conf and restore system default log size caps?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        ok, msg = self.systemd_tuner.restore_default_journald()
+        self._refresh()
+        QMessageBox.information(self, "Journald Defaults Restored", msg)

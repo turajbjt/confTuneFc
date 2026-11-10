@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSplitter,
     QTextEdit,
     QVBoxLayout,
@@ -53,16 +54,18 @@ class ProfilesTab(QWidget):
 
     def _init_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(14)
+        main_layout.setContentsMargins(18, 14, 18, 14)
+        main_layout.setSpacing(10)
 
-        # Header Card
+        # Header Card - compact sizing to prevent unnecessary vertical expansion
         header_card = QFrame()
         header_card.setProperty("class", "card")
+        header_card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         h_layout = QHBoxLayout(header_card)
-        h_layout.setContentsMargins(16, 12, 16, 12)
+        h_layout.setContentsMargins(16, 8, 16, 8)
 
         v_text = QVBoxLayout()
+        v_text.setSpacing(2)
         lbl_title = QLabel("Tuning Profiles & Workload Presets")
         lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;")
         lbl_sub = QLabel("Select a tailored profile for your Fedora desktop or Rocky / CentOS server workloads.")
@@ -78,6 +81,9 @@ class ProfilesTab(QWidget):
 
         self.btn_apply = QPushButton("🚀 Apply Profile" if self.safety.is_root else "🔒 Apply Profile (Requires Root)")
         self.btn_apply.setProperty("class", "primary")
+        if not self.safety.is_root:
+            self.btn_apply.setEnabled(False)
+            self.btn_apply.setToolTip("Root privileges required to apply system tuning profiles. Use Elevate or run with sudo.")
         self.btn_apply.clicked.connect(lambda: self._apply_current_profile(dry_run=False))
         h_layout.addWidget(self.btn_apply)
 
@@ -99,7 +105,7 @@ class ProfilesTab(QWidget):
 
         left_widget = QWidget()
         self.cards_layout = QVBoxLayout(left_widget)
-        self.cards_layout.setSpacing(10)
+        self.cards_layout.setSpacing(8)
         self.cards_layout.setContentsMargins(0, 0, 10, 0)
 
         self.profile_buttons = {}
@@ -115,8 +121,8 @@ class ProfilesTab(QWidget):
         right_card = QFrame()
         right_card.setProperty("class", "card")
         right_layout = QVBoxLayout(right_card)
-        right_layout.setContentsMargins(16, 16, 16, 16)
-        right_layout.setSpacing(10)
+        right_layout.setContentsMargins(14, 12, 14, 12)
+        right_layout.setSpacing(8)
 
         lbl_det = QLabel("Profile Parameter Details & Preview")
         lbl_det.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
@@ -130,7 +136,7 @@ class ProfilesTab(QWidget):
         splitter.addWidget(right_card)
         splitter.setSizes([380, 520])
 
-        main_layout.addWidget(splitter)
+        main_layout.addWidget(splitter, 1)
 
         self._select_profile("balanced")
 
@@ -141,8 +147,8 @@ class ProfilesTab(QWidget):
         card.setCursor(Qt.CursorShape.PointingHandCursor)
 
         c_lay = QVBoxLayout(card)
-        c_lay.setContentsMargins(12, 10, 12, 10)
-        c_lay.setSpacing(4)
+        c_lay.setContentsMargins(12, 8, 12, 8)
+        c_lay.setSpacing(3)
 
         h_box = QHBoxLayout()
         lbl_name = QLabel(f"{prof['icon']} {prof['name']}")

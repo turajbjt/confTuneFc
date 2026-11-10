@@ -27,7 +27,8 @@ class DNFTuner:
         self.backup_mgr = backup_mgr or BackupManager()
 
     def get_current_settings(self) -> Dict[str, Any]:
-        """Read and parse /etc/dnf/dnf.conf and /etc/dnf/dnf5.conf."""
+        """Read and parse live DNF/DNF5 configuration and /etc/dnf/ configuration files."""
+        is_dnf5 = bool(shutil.which("dnf5") or os.path.isfile(DNF5_CONF_PATH))
         settings = {
             "max_parallel_downloads": "3",  # default in standard DNF
             "fastestmirror": "False",
@@ -35,11 +36,65 @@ class DNFTuner:
             "keepcache": "False",
             "clean_requirements_on_remove": "True",
             "exists": os.path.isfile(DNF_CONF_PATH) or os.path.isfile(DNF5_CONF_PATH),
-            "is_dnf5": bool(shutil.which("dnf5") or os.path.isfile(DNF5_CONF_PATH)),
+            "is_dnf5": is_dnf5,
         }
 
-        # Check primary config paths
-        for conf_file in [DNF_CONF_PATH, DNF5_CONF_PATH]:
+        # 1. Query live runtime DNF configuration via CLI if available
+        queried = False
+        if shutil.which("dnf5"):
+            try:
+                res = subprocess.run(
+                    ["dnf5", "--dump-main-config"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=3,
+                )
+                if res.returncode == 0:
+                    for line in res.stdout.splitlines():
+                        if "=" in line:
+                            k, v = [x.strip() for x in line.split("=", 1)]
+                            if k == "max_parallel_downloads" and v:
+                                settings[k] = v
+                            elif k in ["fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
+                                settings[k] = "True" if v.lower() in ("1", "true", "yes", "on") else "False"
+                    queried = True
+            except Exception as e:
+                self.logger.debug(f"dnf5 --dump-main-config query failed: {e}")
+
+        if not queried and shutil.which("dnf"):
+            try:
+                res = subprocess.run(
+                    ["dnf", "config-manager", "--dump"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=3,
+                )
+                if res.returncode == 0:
+                    for line in res.stdout.splitlines():
+                        if "=" in line:
+                            k, v = [x.strip() for x in line.split("=", 1)]
+                            if k == "max_parallel_downloads" and v:
+                                settings[k] = v
+                            elif k in ["fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
+                                settings[k] = "True" if v.lower() in ("1", "true", "yes", "on") else "False"
+                    queried = True
+            except Exception as e:
+                self.logger.debug(f"dnf config-manager --dump query failed: {e}")
+
+        # 2. Check configuration files and drop-in dirs for explicit overrides or fallback
+        conf_candidates = [DNF_CONF_PATH, DNF5_CONF_PATH]
+        for dropin_dir in ["/etc/dnf/libdnf5.conf.d", "/etc/dnf/dnf.conf.d"]:
+            if os.path.isdir(dropin_dir):
+                try:
+                    for fname in sorted(os.listdir(dropin_dir)):
+                        if fname.endswith(".conf"):
+                            conf_candidates.append(os.path.join(dropin_dir, fname))
+                except Exception:
+                    pass
+
+        for conf_file in conf_candidates:
             if not os.path.isfile(conf_file):
                 continue
 
@@ -50,7 +105,11 @@ class DNFTuner:
                 if section:
                     for k in ["max_parallel_downloads", "fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
                         if parser.has_option(section, k):
-                            settings[k] = parser.get(section, k)
+                            raw_val = parser.get(section, k).strip()
+                            if k in ["fastestmirror", "defaultyes", "keepcache", "clean_requirements_on_remove"]:
+                                settings[k] = "True" if raw_val.lower() in ("1", "true", "yes", "on") else "False"
+                            else:
+                                settings[k] = raw_val
             except Exception as e:
                 self.logger.warning(f"Error reading {conf_file}: {e}")
 
@@ -118,6 +177,34 @@ class DNFTuner:
             err = f"Failed to update DNF configuration: {e}"
             self.logger.error(err)
             return False, err
+
+    def is_customized(self) -> bool:
+        """Check whether non-default DNF performance settings are active."""
+        settings = self.get_current_settings()
+        try:
+            dl = int(str(settings.get("max_parallel_downloads", "3")).strip())
+        except (ValueError, TypeError):
+            dl = 3
+        fastest = str(settings.get("fastestmirror", "False")).lower() in ("true", "1", "yes")
+        defyes = str(settings.get("defaultyes", "False")).lower() in ("true", "1", "yes")
+        keepcache = str(settings.get("keepcache", "False")).lower() in ("true", "1", "yes")
+        return dl != 3 or fastest or defyes or keepcache
+
+    def restore_defaults(self) -> Tuple[bool, str]:
+        """Restore standard Fedora DNF defaults (3 downloads, fastestmirror=False, defaultyes=False, keepcache=False)."""
+        valid, msg = self.safety.verify_privilege("Restoring DNF default configuration")
+        if not valid:
+            return False, msg
+
+        ok, msg_opt = self.apply_optimizations(
+            max_parallel_downloads=3,
+            fastestmirror=False,
+            defaultyes=False,
+            keepcache=False,
+        )
+        if ok:
+            return True, "DNF configuration restored to standard Fedora defaults (3 parallel downloads, mirrors/cache defaults)."
+        return False, msg_opt
 
     def clean_cache(self) -> Tuple[bool, str]:
         """Run DNF clean all / metadata purge."""

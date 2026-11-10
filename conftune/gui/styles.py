@@ -128,9 +128,28 @@ QPushButton:pressed {
     background-color: #2a2a2a;
 }
 
-QPushButton:disabled {
-    background-color: #2a2a2a;
-    color: #666666;
+QPushButton:disabled,
+QPushButton.primary:disabled, QPushButton[class="primary"]:disabled,
+QPushButton.destructive:disabled, QPushButton[class="destructive"]:disabled,
+QPushButton.success:disabled, QPushButton[class="success"]:disabled,
+QTableWidget QPushButton:disabled, QTableWidget QPushButton[class="destructive"]:disabled {
+    background-color: #242424;
+    color: #5a5a5a;
+    border-color: #333333;
+}
+
+QCheckBox:disabled, QRadioButton:disabled {
+    color: #5a5a5a;
+}
+
+QCheckBox::indicator:disabled {
+    background-color: #1e1e1e;
+    border-color: #333333;
+}
+
+QLineEdit:disabled, QSpinBox:disabled, QComboBox:disabled, QTextEdit:disabled {
+    background-color: #1e1e1e;
+    color: #5a5a5a;
     border-color: #333333;
 }
 

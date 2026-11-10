@@ -55,6 +55,10 @@ class PrivacyTab(QWidget):
         lbl_p_h.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
         p_lay.addWidget(lbl_p_h)
 
+        self.lbl_status = QLabel("Checking telemetry status...")
+        self.lbl_status.setStyleSheet("color: #dedede; font-size: 12px; font-weight: 500;")
+        p_lay.addWidget(self.lbl_status)
+
         lbl_desc = QLabel(
             "• Disables GNOME Software usage statistics and metrics collection.<br>"
             "• Disables automatic transmission of technical problem reports and crash logs.<br>"
@@ -69,12 +73,48 @@ class PrivacyTab(QWidget):
         self.btn_disable_all.setProperty("class", "primary")
         self.btn_disable_all.clicked.connect(self._disable_all)
         h_btn.addWidget(self.btn_disable_all)
+
+        self.btn_restore = QPushButton("↺ Restore Default Telemetry & Reporting (Undo)")
+        self.btn_restore.setToolTip("Re-enable standard Fedora automatic bug reporting and GNOME usage statistics")
+        self.btn_restore.clicked.connect(self._restore_defaults)
+        h_btn.addWidget(self.btn_restore)
+
         h_btn.addStretch()
         p_lay.addLayout(h_btn)
 
         layout.addWidget(priv_card)
         layout.addStretch()
+        self._refresh()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._refresh()
+
+    def _refresh(self):
+        is_hardened = self.privacy_tuner.is_telemetry_disabled()
+        if is_hardened:
+            self.lbl_status.setText("Status: 🟢 Strict Privacy Mode Active (Telemetry, Metrics & Crash Reporting disabled)")
+            self.lbl_status.setStyleSheet("color: #57e389; font-size: 12px; font-weight: 500;")
+        else:
+            self.lbl_status.setText("Status: ⚪ Standard Fedora Telemetry Settings Active (Default)")
+            self.lbl_status.setStyleSheet("color: #99c1f1; font-size: 12px; font-weight: 500;")
 
     def _disable_all(self):
         ok, msg = self.privacy_tuner.disable_all_telemetry()
+        self._refresh()
         QMessageBox.information(self, "Privacy Configured", msg)
+
+    def _restore_defaults(self):
+        reply = QMessageBox.question(
+            self,
+            "Restore Telemetry Defaults",
+            "Restore standard Fedora defaults for automatic problem reporting and GNOME metrics?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        ok, msg = self.privacy_tuner.restore_telemetry_defaults()
+        self._refresh()
+        QMessageBox.information(self, "Telemetry Defaults Restored", msg)

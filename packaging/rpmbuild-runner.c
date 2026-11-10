@@ -9,10 +9,49 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <rpm/rpmlib.h>
-#include <rpm/rpmbuild.h>
-#include <rpm/rpmts.h>
-#include <rpm/rpmmacro.h>
+
+typedef void * rpmts;
+typedef void * rpmSpec;
+
+#define RPMBUILD_NONE           0
+#define RPMBUILD_PREP           (1 <<  0)
+#define RPMBUILD_BUILD          (1 <<  1)
+#define RPMBUILD_INSTALL        (1 <<  2)
+#define RPMBUILD_CHECK          (1 <<  3)
+#define RPMBUILD_CLEAN          (1 <<  4)
+#define RPMBUILD_FILECHECK      (1 <<  5)
+#define RPMBUILD_PACKAGESOURCE  (1 <<  6)
+#define RPMBUILD_PACKAGEBINARY  (1 <<  7)
+#define RPMBUILD_RMSOURCE       (1 <<  8)
+#define RPMBUILD_RMBUILD        (1 <<  9)
+#define RPMBUILD_STRINGBUF      (1 << 10)
+#define RPMBUILD_RMSPEC         (1 << 11)
+#define RPMBUILD_CONF           (1 << 22)
+#define RPMBUILD_MKBUILDDIR     (1 << 23)
+
+#define RPMSPEC_NONE            0
+#define RPMSPEC_ANYARCH         (1 << 0)
+#define RPMSPEC_FORCE           (1 << 1)
+#define RPMSPEC_NOLANG          (1 << 2)
+#define RPMSPEC_NOUTF8          (1 << 3)
+#define RPMSPEC_NOFINALIZE      (1 << 4)
+
+struct rpmBuildArguments_s {
+    int pkgFlags;
+    int buildAmount;
+    char * buildRootOverride;
+    char * cookie;
+    const char * rootdir;
+};
+
+extern int rpmReadConfigFiles(const char *file, const char *target);
+extern int rpmDefineMacro(void *mc, const char *macro, int level);
+extern rpmts rpmtsCreate(void);
+extern rpmts rpmtsFree(rpmts ts);
+extern rpmSpec rpmSpecParse(const char *specFile, int flags, const char *buildRoot);
+extern void rpmSpecFree(rpmSpec spec);
+extern int rpmSpecBuild(rpmts ts, rpmSpec spec, struct rpmBuildArguments_s *ba);
+extern int rpmFreeRpmrc(void);
 
 static void ensure_rpmuncompress(void) {
     if (access("/usr/bin/rpmuncompress", X_OK) == 0) {

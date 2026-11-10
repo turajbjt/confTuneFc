@@ -34,7 +34,16 @@ else
     RUNNER_BIN="${SCRIPT_DIR}/rpmbuild-runner"
     if [ ! -x "${RUNNER_BIN}" ]; then
         echo "==> Compiling native librpmbuild runner..."
-        gcc -O2 -o "${RUNNER_BIN}" "${SCRIPT_DIR}/rpmbuild-runner.c" -lrpm -lrpmbuild -lrpmio
+        RPM_LIBS=""
+        for lib in /usr/lib64/librpm.so* /usr/lib64/librpmbuild.so* /usr/lib64/librpmio.so*; do
+            if [ -f "$lib" ] && [[ "$lib" =~ \.so\.[0-9]+$ ]]; then
+                RPM_LIBS="$RPM_LIBS $lib"
+            fi
+        done
+        if [ -z "$RPM_LIBS" ]; then
+            RPM_LIBS="-lrpm -lrpmbuild -lrpmio"
+        fi
+        gcc -O2 -o "${RUNNER_BIN}" "${SCRIPT_DIR}/rpmbuild-runner.c" ${RPM_LIBS}
     fi
     RPMBUILD_BIN="${RUNNER_BIN}"
 fi

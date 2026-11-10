@@ -295,6 +295,9 @@ class MainWindow(QMainWindow):
         self.tab_logs = LogsTab()
         self.stack.addWidget(self.tab_logs)
 
+        # Refresh dependent views when profiles are applied
+        self.tab_profiles.profile_applied.connect(lambda _: self.tab_dnf._load_current())
+
         body_layout.addWidget(self.stack)
         main_layout.addLayout(body_layout)
 
@@ -303,6 +306,15 @@ class MainWindow(QMainWindow):
 
     def _on_nav_changed(self, row: int):
         self.stack.setCurrentIndex(row)
+        widget = self.stack.currentWidget()
+        if hasattr(widget, "_load_current"):
+            widget._load_current()
+        elif hasattr(widget, "_refresh"):
+            widget._refresh()
+        elif hasattr(widget, "_reload_table"):
+            widget._reload_table()
+        elif hasattr(widget, "refresh_data"):
+            widget.refresh_data()
 
     def _relaunch_as_root(self):
         """Relaunch ConfTune FC as root via PolicyKit (pkexec) with handshake."""

@@ -479,6 +479,7 @@ class TestGUITabs(unittest.TestCase):
         self.assertTrue(os.path.isfile(out_f))
 
         # Import & Preview
+        self.safety.is_root = True
         with patch.object(QFileDialog, "getOpenFileName", return_value=(out_f, "All Files (*)")):
             tab._select_import_file()
             self.assertIsNotNone(tab.loaded_preset_data)

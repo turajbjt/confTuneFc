@@ -82,3 +82,61 @@ class PrivacyTuner:
         msg = " ".join(results) if results else "Telemetry settings verified."
         self.logger.info(msg)
         return True, msg
+
+    def is_telemetry_disabled(self) -> bool:
+        """Check whether strict privacy mode or telemetry disabling is active."""
+        coredump_conf = "/etc/systemd/coredump.conf.d/99-privacy.conf"
+        if os.path.isfile(coredump_conf):
+            return True
+
+        if shutil.which("gsettings"):
+            try:
+                res_s = subprocess.run(
+                    ["gsettings", "get", "org.gnome.desktop.privacy", "send-software-usage-stats"],
+                    capture_output=True, text=True, timeout=2,
+                )
+                if res_s.stdout.strip().replace("'", "") == "false":
+                    return True
+                res_r = subprocess.run(
+                    ["gsettings", "get", "org.gnome.desktop.privacy", "report-technical-problems"],
+                    capture_output=True, text=True, timeout=2,
+                )
+                if res_r.stdout.strip().replace("'", "") == "false":
+                    return True
+            except Exception:
+                pass
+
+        return False
+
+    def restore_telemetry_defaults(self) -> Tuple[bool, str]:
+        """Restore standard Fedora defaults for crash reporting and usage metrics."""
+        results = []
+
+        if shutil.which("gsettings"):
+            try:
+                subprocess.run(
+                    ["gsettings", "set", "org.gnome.desktop.privacy", "send-software-usage-stats", "true"],
+                    check=False,
+                )
+                results.append("GNOME software statistics restored to default.")
+            except Exception:
+                pass
+
+            try:
+                subprocess.run(
+                    ["gsettings", "set", "org.gnome.desktop.privacy", "report-technical-problems", "true"],
+                    check=False,
+                )
+                results.append("Automatic problem reporting restored to default.")
+            except Exception:
+                pass
+
+        coredump_conf = "/etc/systemd/coredump.conf.d/99-privacy.conf"
+        if os.path.isfile(coredump_conf):
+            ok_rm, msg_rm = self.safety.remove_file(coredump_conf)
+            if ok_rm:
+                results.append("Core dump collection override removed.")
+
+        msg = " ".join(results) if results else "Restored standard telemetry and reporting defaults."
+        self.logger.info(msg)
+        return True, msg

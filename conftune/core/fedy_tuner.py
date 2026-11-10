@@ -42,10 +42,51 @@ class FedyTuner:
     # --- 1. RPM Fusion Repositories ---
 
     def is_rpmfusion_installed(self) -> Dict[str, bool]:
-        """Check if RPM Fusion Free and Nonfree are installed."""
-        free = os.path.isfile("/etc/yum.repos.d/rpmfusion-free.repo")
-        nonfree = os.path.isfile("/etc/yum.repos.d/rpmfusion-nonfree.repo")
-        return {"free": free, "nonfree": nonfree}
+        """Check if RPM Fusion Free and Nonfree are installed and active."""
+        # 1. Check known repo file locations (DNF4 /etc/yum.repos.d/ and DNF5 /usr/share/dnf5/repos.d/)
+        free_paths = [
+            "/etc/yum.repos.d/rpmfusion-free.repo",
+            "/usr/share/dnf5/repos.d/rpmfusion-free.repo",
+            "/etc/distro.repos.d/rpmfusion-free.repo",
+        ]
+        nonfree_paths = [
+            "/etc/yum.repos.d/rpmfusion-nonfree.repo",
+            "/usr/share/dnf5/repos.d/rpmfusion-nonfree.repo",
+            "/etc/distro.repos.d/rpmfusion-nonfree.repo",
+        ]
+        free = any(os.path.isfile(p) for p in free_paths)
+        nonfree = any(os.path.isfile(p) for p in nonfree_paths)
+
+        # 2. Check RPM database directly if not found by file paths
+        if not (free and nonfree) and shutil.which("rpm"):
+            try:
+                res_free = subprocess.run(["rpm", "-q", "rpmfusion-free-release"], capture_output=True, timeout=2)
+                if res_free.returncode == 0:
+                    free = True
+                res_nonfree = subprocess.run(["rpm", "-q", "rpmfusion-nonfree-release"], capture_output=True, timeout=2)
+                if res_nonfree.returncode == 0:
+                    nonfree = True
+            except Exception:
+                pass
+
+        # 3. Check if repos are enabled in repolist
+        enabled = free and nonfree
+        if enabled and shutil.which("dnf5"):
+            try:
+                res = subprocess.run(["dnf5", "repolist", "--enabled"], capture_output=True, text=True, timeout=3)
+                if res.returncode == 0:
+                    enabled = ("rpmfusion-free" in res.stdout) and ("rpmfusion-nonfree" in res.stdout)
+            except Exception:
+                pass
+        elif enabled and shutil.which("dnf"):
+            try:
+                res = subprocess.run(["dnf", "repolist", "enabled"], capture_output=True, text=True, timeout=3)
+                if res.returncode == 0:
+                    enabled = ("rpmfusion-free" in res.stdout) and ("rpmfusion-nonfree" in res.stdout)
+            except Exception:
+                pass
+
+        return {"free": free, "nonfree": nonfree, "enabled": enabled}
 
     def install_rpmfusion(self) -> Tuple[bool, str]:
         """Enable RPM Fusion Free & Nonfree repositories on Fedora / EL."""
@@ -69,9 +110,53 @@ class FedyTuner:
         try:
             res = self.safety.run_command(["bash", "-c", " ".join(cmd)], timeout=60)
             if res.returncode == 0:
+                if shutil.which("dnf5"):
+                    try:
+                        self.safety.run_command(["dnf5", "config-manager", "enable", "rpmfusion-free", "rpmfusion-nonfree"], timeout=10)
+                    except Exception:
+                        pass
                 self.logger.info("Successfully enabled RPM Fusion Free and Nonfree.")
                 return True, "RPM Fusion Free and Nonfree repositories installed successfully."
             return False, f"Failed to enable RPM Fusion: {res.stderr.strip()}"
+        except Exception as e:
+            return False, str(e)
+
+    def disable_rpmfusion(self) -> Tuple[bool, str]:
+        """Disable or remove RPM Fusion Free & Nonfree repositories."""
+        valid, msg = self.safety.verify_privilege("Disabling RPM Fusion repositories")
+        if not valid:
+            return False, msg
+
+        dnf_bin = shutil.which("dnf5") or shutil.which("dnf")
+        if not dnf_bin:
+            return False, "DNF package manager not found."
+
+        cmd = [dnf_bin, "remove", "-y", "rpmfusion-free-release", "rpmfusion-nonfree-release"]
+
+        if self.safety.dry_run:
+            return True, f"[DRY RUN] Would execute: {' '.join(cmd)}"
+
+        try:
+            res = self.safety.run_command(cmd, timeout=60)
+            if shutil.which("dnf5"):
+                try:
+                    self.safety.run_command(["dnf5", "config-manager", "disable", "rpmfusion-free*", "rpmfusion-nonfree*"], timeout=10)
+                except Exception:
+                    pass
+            elif shutil.which("dnf"):
+                try:
+                    self.safety.run_command(["dnf", "config-manager", "--set-disabled", "rpmfusion-free*", "rpmfusion-nonfree*"], timeout=10)
+                except Exception:
+                    pass
+
+            if res.returncode == 0:
+                self.logger.info("Successfully disabled and removed RPM Fusion Free and Nonfree repositories.")
+                return True, "RPM Fusion Free and Nonfree repositories disabled successfully."
+            else:
+                rf = self.is_rpmfusion_installed()
+                if not rf.get("enabled", False):
+                    return True, "RPM Fusion repositories disabled successfully."
+                return False, f"Failed to disable RPM Fusion: {res.stderr.strip()}"
         except Exception as e:
             return False, str(e)
 
@@ -126,6 +211,22 @@ class FedyTuner:
             return True, "Font rendering optimized: Subpixel RGB anti-aliasing & LCD filter enabled."
         except Exception as e:
             return False, str(e)
+
+    def is_font_rendering_optimized(self) -> bool:
+        """Check if custom fontconfig override is active."""
+        return os.path.isfile(FONTCONFIG_USER_FILE)
+
+    def restore_default_fonts(self) -> Tuple[bool, str]:
+        """Restore default system font rendering by removing ~/.config/fontconfig/fonts.conf."""
+        try:
+            if os.path.isfile(FONTCONFIG_USER_FILE):
+                os.remove(FONTCONFIG_USER_FILE)
+            if shutil.which("fc-cache"):
+                subprocess.run(["fc-cache", "-fv"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.logger.info("Restored default font rendering configuration.")
+            return True, "Font rendering restored to system defaults (custom fonts.conf removed)."
+        except Exception as e:
+            return False, f"Failed to restore default fonts: {e}"
 
     # --- 4. Proprietary Driver & Hardware Detection ---
 
@@ -200,11 +301,12 @@ class FedyTuner:
         if not shutil.which("gsettings"):
             return False, "gsettings not available (non-GNOME desktop)."
 
-        buttons = ["close"]
+        buttons = []
         if minimize:
-            buttons.insert(0, "minimize")
+            buttons.append("minimize")
         if maximize:
-            buttons.insert(0, "maximize")
+            buttons.append("maximize")
+        buttons.append("close")
         btn_str = f"appmenu:{','.join(buttons)}"
 
         try:
@@ -228,5 +330,23 @@ class FedyTuner:
                 check=True,
             )
             return True, f"Battery percentage display set to {show}."
+        except Exception as e:
+            return False, str(e)
+
+    def restore_gnome_defaults(self) -> Tuple[bool, str]:
+        """Restore standard GNOME desktop defaults (close button only, battery % hidden)."""
+        if not shutil.which("gsettings"):
+            return False, "gsettings not available."
+        try:
+            subprocess.run(
+                ["gsettings", "set", "org.gnome.desktop.wm.preferences", "button-layout", "appmenu:close"],
+                check=False,
+            )
+            subprocess.run(
+                ["gsettings", "set", "org.gnome.desktop.interface", "show-battery-percentage", "false"],
+                check=False,
+            )
+            self.logger.info("Restored default GNOME desktop settings.")
+            return True, "GNOME desktop restored to defaults (Close button only, battery percentage off)."
         except Exception as e:
             return False, str(e)

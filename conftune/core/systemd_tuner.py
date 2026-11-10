@@ -153,6 +153,33 @@ class SystemdTuner:
             self.logger.error(err)
             return False, err
 
+    def is_journald_configured(self) -> bool:
+        """Check if custom journald override file exists."""
+        return os.path.isfile(JOURNALD_CONF_PATH)
+
+    def restore_default_journald(self) -> Tuple[bool, str]:
+        """Restore system default journald configuration by removing override file."""
+        valid, msg = self.safety.verify_privilege("Restoring default journald configuration")
+        if not valid:
+            return False, msg
+
+        if os.path.isfile(JOURNALD_CONF_PATH):
+            self.backup_mgr.create_snapshot(
+                profile_name="journald_pre_restore",
+                target_paths=[JOURNALD_CONF_PATH],
+                notes="Backup before restoring default journald limits",
+                dry_run=self.safety.dry_run,
+            )
+
+        ok_rm, msg_rm = self.safety.remove_file(JOURNALD_CONF_PATH)
+        if not ok_rm:
+            return False, f"Failed to remove {JOURNALD_CONF_PATH}: {msg_rm}"
+
+        # Restart journald to restore system defaults
+        self.safety.run_command(["systemctl", "restart", "systemd-journald"])
+        self.logger.info("Restored default journald configuration.")
+        return True, "Removed /etc/systemd/journald.conf.d/99-conftune.conf and restored default journal limits."
+
     def _check_service_active(self, service: str) -> bool:
         try:
             res = subprocess.run(["systemctl", "is-active", service], capture_output=True, text=True, timeout=2)

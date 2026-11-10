@@ -174,6 +174,21 @@ class PowerTab(QWidget):
         t_lay.addLayout(h_tc)
         layout.addWidget(thp_card)
 
+        # Gray out root-only power controls if unprivileged
+        if not self.safety.is_root:
+            power_tip = "Root privileges required to modify CPU governors, EPP energy hints, and kernel THP"
+            self.btn_auto_power.setEnabled(False)
+            self.btn_auto_power.setToolTip(power_tip)
+            self.combo_gov.setEnabled(False)
+            self.btn_set_gov.setEnabled(False)
+            self.btn_set_gov.setToolTip(power_tip)
+            self.combo_epp.setEnabled(False)
+            self.btn_set_epp.setEnabled(False)
+            self.btn_set_epp.setToolTip(power_tip)
+            self.combo_thp.setEnabled(False)
+            self.btn_set_thp.setEnabled(False)
+            self.btn_set_thp.setToolTip(power_tip)
+
         layout.addStretch()
         scroll.setWidget(container)
         main_layout.addWidget(scroll)

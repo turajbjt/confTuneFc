@@ -121,6 +121,8 @@ class PresetsTab(QWidget):
         self.btn_apply_preset = QPushButton(apply_lbl)
         self.btn_apply_preset.setProperty("class", "primary")
         self.btn_apply_preset.setEnabled(False)
+        if not self.safety.is_root:
+            self.btn_apply_preset.setToolTip("Root privileges required to apply preset to system configuration files")
         self.btn_apply_preset.clicked.connect(self._apply_loaded_preset)
         h_i_btn.addWidget(self.btn_apply_preset)
         h_i_btn.addStretch()
@@ -231,7 +233,9 @@ class PresetsTab(QWidget):
             return
 
         self.loaded_preset_data = data
-        self.btn_apply_preset.setEnabled(True)
+        self.btn_apply_preset.setEnabled(self.safety.is_root)
+        if not self.safety.is_root:
+            self.btn_apply_preset.setToolTip("Root privileges required to apply imported preset to system configuration")
 
         preview = [
             f"Preset Name : {data.get('name')}",

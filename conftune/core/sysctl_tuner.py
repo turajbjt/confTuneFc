@@ -254,3 +254,36 @@ class SysctlTuner:
             err = f"Failed to write or apply sysctl configuration: {e}"
             self.logger.error(err)
             return False, err
+
+    def has_custom_overrides(self) -> bool:
+        """Check if custom sysctl override file exists in /etc/sysctl.d/99-conftune.conf."""
+        return os.path.isfile(SYSCTL_CONF_PATH)
+
+    def restore_system_defaults(self) -> Tuple[bool, str]:
+        """
+        Remove /etc/sysctl.d/99-conftune.conf and reload kernel sysctl hierarchy
+        from system defaults (/usr/lib/sysctl.d/, /etc/sysctl.conf).
+        """
+        valid, msg = self.safety.verify_privilege("Restoring default sysctl configuration")
+        if not valid:
+            return False, msg
+
+        if os.path.isfile(SYSCTL_CONF_PATH):
+            self.backup_mgr.create_snapshot(
+                profile_name="sysctl_pre_restore",
+                target_paths=[SYSCTL_CONF_PATH],
+                notes="Backup before restoring default sysctl",
+                dry_run=self.safety.dry_run,
+            )
+
+        ok_rm, msg_rm = self.safety.remove_file(SYSCTL_CONF_PATH)
+        if not ok_rm:
+            return False, f"Failed to remove {SYSCTL_CONF_PATH}: {msg_rm}"
+
+        # Reload sysctl defaults across all directories
+        sysctl_cmd = shutil.which("sysctl")
+        if sysctl_cmd:
+            self.safety.run_command([sysctl_cmd, "--system"], timeout=10)
+
+        self.logger.info("Restored kernel sysctl to system defaults.")
+        return True, "Removed /etc/sysctl.d/99-conftune.conf and reloaded system defaults (sysctl --system)."

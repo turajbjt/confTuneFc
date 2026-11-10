@@ -88,6 +88,33 @@ class ProcessTuner:
         except Exception as e:
             return False, str(e)
 
+    def is_oomd_customized(self) -> bool:
+        """Check if custom oomd override file exists in /etc/systemd/oomd.conf.d/99-conftune.conf."""
+        return os.path.isfile(OOMD_CONF_PATH)
+
+    def restore_default_oomd(self) -> Tuple[bool, str]:
+        """Restore default systemd-oomd thresholds by removing override file."""
+        valid, msg = self.safety.verify_privilege("Restoring default systemd-oomd limits")
+        if not valid:
+            return False, msg
+
+        if os.path.isfile(OOMD_CONF_PATH):
+            self.backup_mgr.create_snapshot(
+                profile_name="oomd_pre_restore",
+                target_paths=[OOMD_CONF_PATH],
+                notes="Backup before restoring default systemd-oomd limits",
+                dry_run=self.safety.dry_run,
+            )
+
+        ok_rm, msg_rm = self.safety.remove_file(OOMD_CONF_PATH)
+        if not ok_rm:
+            return False, f"Failed to remove {OOMD_CONF_PATH}: {msg_rm}"
+
+        # Restart oomd to restore defaults
+        self.safety.run_command(["systemctl", "restart", "systemd-oomd"])
+        self.logger.info("Restored default systemd-oomd configuration.")
+        return True, "Removed /etc/systemd/oomd.conf.d/99-conftune.conf and restored default systemd-oomd thresholds (60% memory pressure, 90% swap)."
+
     # --- 2. OOM Killer Protection Score ---
 
     def protect_process_by_name(self, process_name: str, score_adjust: int = -500) -> Tuple[bool, str]:

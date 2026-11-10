@@ -71,6 +71,10 @@ class ServerTab(QWidget):
         self.combo_tuned = QComboBox()
         sw_btn_lbl = "Switch Profile" if self.safety.is_root else "🔒 Switch Profile (Requires Root)"
         self.btn_switch = QPushButton(sw_btn_lbl)
+        if not self.safety.is_root:
+            self.combo_tuned.setEnabled(False)
+            self.btn_switch.setEnabled(False)
+            self.btn_switch.setToolTip("Root privileges required to switch system tuned-adm profile")
         self.btn_switch.clicked.connect(self._switch_tuned_profile)
         h_ts.addWidget(lbl_sw)
         h_ts.addWidget(self.combo_tuned)

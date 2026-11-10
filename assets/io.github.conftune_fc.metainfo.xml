@@ -51,6 +51,19 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.5" date="2026-11-09">
+      <description>
+        <p>User-mode safety, granular default/undo rollback, and desktop refinement release:</p>
+        <ul>
+          <li>Automatically gray out all root-only options and controls when running as an unprivileged user</li>
+          <li>Added dedicated Default / Undo actions across all modules for granular 1-click rollback</li>
+          <li>Added live active state indicators (green/gray/red) for custom overrides vs stock defaults</li>
+          <li>Corrected GNOME window header button order to minimize, maximize, close matching GNOME Tweaks</li>
+          <li>Fixed live DNF parallel downloads detection and checkbox loading state across DNF4/DNF5</li>
+          <li>Optimized layout spacing in Tuning Profiles tab to eliminate whitespace and maximize visible area</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.4" date="2026-11-05">
       <description>
         <p>Beta release notices and alignment with ConfClean FC:</p>
