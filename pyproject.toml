@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "conftune-fc"
-version = "1.0.6"
+version = "1.0.7"
 description = "Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.6
+Version:        1.0.7
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,13 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.7-1
+- Add live status badge and dynamic toggle button for ABRT bug reporting daemons in Autostart Manager
+- Add Default (Undo) rollback button and live storage ceiling status for systemd-coredump
+- Synchronize coredump storage limit combo box on tab load with active drop-in configuration
+- Gray out coredump ceiling controls and ABRT daemon management when running as non-root
+- Add comprehensive unit tests for coredump default/undo, ABRT active status, and non-root gray-out
+
 * Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.6-1
 - Center and align table cell buttons in Kernel & Sysctl, Boot & Systemd, and Autostart tables
 - Wrap table cell action buttons inside centered QHBoxLayout containers with fixed column geometry

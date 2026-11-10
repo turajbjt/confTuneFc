@@ -136,6 +136,15 @@ class TestNonRootGrayout(unittest.TestCase):
         tab = PresetsTab(PresetManager(), self.safety_user)
         self.assertFalse(tab.btn_apply_preset.isEnabled(), "Apply preset must be disabled for non-root")
 
+    def test_autostart_tab_non_root(self):
+        from conftune.core.autostart_tuner import AutostartTuner
+        from conftune.gui.tab_autostart import AutostartTab
+        tab = AutostartTab(AutostartTuner(self.safety_user, self.backup_mgr), self.safety_user)
+        self.assertFalse(tab.btn_apply_cd.isEnabled(), "Apply coredump ceiling must be disabled for non-root")
+        self.assertFalse(tab.btn_reset_cd.isEnabled(), "Reset coredump ceiling must be disabled for non-root")
+        self.assertFalse(tab.btn_toggle_abrt.isEnabled(), "ABRT toggle must be disabled for non-root")
+        self.assertFalse(tab.combo_cd.isEnabled(), "Core dump combo must be disabled for non-root")
+
 
 if __name__ == "__main__":
     unittest.main()

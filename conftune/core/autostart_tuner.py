@@ -97,6 +97,28 @@ class AutostartTuner:
 
     # --- 2. Core Dump Disk Limiter ---
 
+    def is_coredump_configured(self) -> bool:
+        """Check if custom coredump storage limit override is active."""
+        return os.path.isfile(COREDUMP_CONF_PATH)
+
+    def has_custom_overrides(self) -> bool:
+        """Check if any custom coredump overrides exist."""
+        return self.is_coredump_configured()
+
+    def get_current_coredump_limit(self) -> Optional[str]:
+        """Read active MaxUse setting from drop-in config if present."""
+        if not os.path.isfile(COREDUMP_CONF_PATH):
+            return None
+        try:
+            with open(COREDUMP_CONF_PATH, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("MaxUse="):
+                        return line.split("=", 1)[1].strip()
+        except Exception:
+            pass
+        return None
+
     def configure_coredump_limit(self, max_use: str = "200M") -> Tuple[bool, str]:
         """Configure /etc/systemd/coredump.conf.d/99-conftune.conf to cap core dump waste."""
         valid, msg = self.safety.verify_privilege("Configuring systemd-coredump limits")
@@ -130,6 +152,32 @@ class AutostartTuner:
         except Exception as e:
             return False, str(e)
 
+    def restore_default_coredump(self) -> Tuple[bool, str]:
+        """Remove /etc/systemd/coredump.conf.d/99-conftune.conf to restore system defaults."""
+        valid, msg = self.safety.verify_privilege("Restoring default coredump configuration")
+        if not valid:
+            return False, msg
+
+        if not os.path.isfile(COREDUMP_CONF_PATH):
+            return True, "Default systemd-coredump configuration is already active (no override file found)."
+
+        self.backup_mgr.create_snapshot(
+            profile_name="coredump_pre_restore",
+            target_paths=[COREDUMP_CONF_PATH],
+            notes="Pre-restore snapshot before removing coredump override",
+            dry_run=self.safety.dry_run,
+        )
+
+        if self.safety.dry_run:
+            return True, f"[DRY RUN] Would remove {COREDUMP_CONF_PATH} to restore default systemd-coredump configuration."
+
+        try:
+            os.remove(COREDUMP_CONF_PATH)
+            self.logger.info("Restored default systemd-coredump configuration.")
+            return True, "Removed coredump storage override; restored systemd defaults."
+        except Exception as e:
+            return False, str(e)
+
     # --- 3. ABRT Bug Reporting Daemons ---
 
     def get_abrt_status(self) -> Dict[str, Any]:
@@ -143,6 +191,11 @@ class AutostartTuner:
             except Exception:
                 status[s] = False
         return status
+
+    def is_abrt_active(self) -> bool:
+        """Return True if any ABRT daemon is currently running/active."""
+        status = self.get_abrt_status()
+        return any(status.values())
 
     def toggle_abrt_services(self, enable: bool) -> Tuple[bool, str]:
         """Enable or disable ABRT background daemons."""

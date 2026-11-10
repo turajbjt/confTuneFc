@@ -51,6 +51,17 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.7" date="2026-11-09">
+      <description>
+        <p>Autostart Manager live status indicators and coredump rollback release:</p>
+        <ul>
+          <li>Added live status badge and dynamic toggle button for ABRT bug reporting daemons in the Autostart Manager</li>
+          <li>Added Default (Undo) rollback button and live storage ceiling status indicator for systemd-coredump</li>
+          <li>Synchronized coredump storage limit selector on tab load with active drop-in configuration</li>
+          <li>Grayed out root-only coredump ceiling controls and ABRT daemon management when running as an unprivileged user</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.6" date="2026-11-09">
       <description>
         <p>Table cell layout, button alignment, and visual polish release:</p>

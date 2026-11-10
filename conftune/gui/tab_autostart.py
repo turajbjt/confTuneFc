@@ -87,6 +87,10 @@ class AutostartTab(QWidget):
         lbl_cd.setStyleSheet("font-size: 13px; font-weight: bold; color: #ffffff;")
         cd_lay.addWidget(lbl_cd)
 
+        self.lbl_cd_status = QLabel("Status: Checking...")
+        self.lbl_cd_status.setStyleSheet("color: #a0a0a0; font-size: 11px;")
+        cd_lay.addWidget(self.lbl_cd_status)
+
         h_cdc = QHBoxLayout()
         self.combo_cd = QComboBox()
         self.combo_cd.addItems(["50M", "100M", "200M", "500M", "1G"])
@@ -94,8 +98,14 @@ class AutostartTab(QWidget):
         cd_btn_lbl = "Apply Ceiling" if self.safety.is_root else "🔒 Apply Ceiling (Requires Root)"
         self.btn_apply_cd = QPushButton(cd_btn_lbl)
         self.btn_apply_cd.clicked.connect(self._apply_coredump)
+
+        reset_cd_lbl = "↺ Default (Undo)" if self.safety.is_root else "🔒 Default (Requires Root)"
+        self.btn_reset_cd = QPushButton(reset_cd_lbl)
+        self.btn_reset_cd.clicked.connect(self._reset_coredump)
+
         h_cdc.addWidget(self.combo_cd)
         h_cdc.addWidget(self.btn_apply_cd)
+        h_cdc.addWidget(self.btn_reset_cd)
         cd_lay.addLayout(h_cdc)
         h_util.addWidget(cd_card)
 
@@ -106,6 +116,10 @@ class AutostartTab(QWidget):
         lbl_ab = QLabel("🐞 ABRT Bug Reporting Daemons")
         lbl_ab.setStyleSheet("font-size: 13px; font-weight: bold; color: #ffffff;")
         ab_lay.addWidget(lbl_ab)
+
+        self.lbl_abrt_status = QLabel("Status: Checking...")
+        self.lbl_abrt_status.setStyleSheet("color: #a0a0a0; font-size: 11px;")
+        ab_lay.addWidget(self.lbl_abrt_status)
 
         h_abc = QHBoxLayout()
         abrt_btn_lbl = "Disable ABRT Daemons" if self.safety.is_root else "🔒 Disable ABRT Daemons (Requires Root)"
@@ -157,6 +171,49 @@ class AutostartTab(QWidget):
             self.table_auto.setItem(row, 3, it_action)
             self.table_auto.setCellWidget(row, 3, cell_container)
 
+        # Update coredump status & undo controls
+        is_cd_custom = self.autostart_tuner.is_coredump_configured()
+        active_cd_limit = self.autostart_tuner.get_current_coredump_limit()
+        if is_cd_custom and active_cd_limit:
+            self.lbl_cd_status.setText(f"Status: 🟢 Custom ceiling active ({active_cd_limit})")
+            self.lbl_cd_status.setStyleSheet("color: #2ecc71; font-size: 11px; font-weight: bold;")
+            idx = self.combo_cd.findText(active_cd_limit)
+            if idx >= 0:
+                self.combo_cd.setCurrentIndex(idx)
+        else:
+            self.lbl_cd_status.setText("Status: ⚪ System default storage ceiling active (unlimited / 10% root)")
+            self.lbl_cd_status.setStyleSheet("color: #a0a0a0; font-size: 11px;")
+
+        self.btn_apply_cd.setEnabled(self.safety.is_root)
+        self.btn_reset_cd.setEnabled(self.safety.is_root and is_cd_custom)
+        if not self.safety.is_root:
+            self.btn_apply_cd.setText("🔒 Apply Ceiling (Requires Root)")
+            self.btn_reset_cd.setText("🔒 Default (Requires Root)")
+            self.combo_cd.setEnabled(False)
+        else:
+            self.btn_apply_cd.setText("Apply Ceiling")
+            self.btn_reset_cd.setText("↺ Default (Undo)")
+            self.combo_cd.setEnabled(True)
+
+        # Update ABRT status & toggle button
+        abrt_active = self.autostart_tuner.is_abrt_active()
+        if abrt_active:
+            self.lbl_abrt_status.setText("Status: 🟢 ABRT Services Active / Running")
+            self.lbl_abrt_status.setStyleSheet("color: #2ecc71; font-size: 11px; font-weight: bold;")
+            abrt_txt = "Disable ABRT Daemons" if self.safety.is_root else "🔒 Disable ABRT Daemons (Root)"
+            self.btn_toggle_abrt.setText(abrt_txt)
+            self.btn_toggle_abrt.setProperty("class", "destructive")
+        else:
+            self.lbl_abrt_status.setText("Status: ⚪ ABRT Services Inactive / Disabled")
+            self.lbl_abrt_status.setStyleSheet("color: #a0a0a0; font-size: 11px;")
+            abrt_txt = "Enable ABRT Daemons" if self.safety.is_root else "🔒 Enable ABRT Daemons (Root)"
+            self.btn_toggle_abrt.setText(abrt_txt)
+            self.btn_toggle_abrt.setProperty("class", "")
+
+        self.btn_toggle_abrt.style().unpolish(self.btn_toggle_abrt)
+        self.btn_toggle_abrt.style().polish(self.btn_toggle_abrt)
+        self.btn_toggle_abrt.setEnabled(self.safety.is_root)
+
     def _toggle_entry(self, path: str, enable: bool):
         if path.startswith("/etc/") and not self.safety.is_root:
             if not prompt_root_required(self, f"{'Enable' if enable else 'Disable'} System Autostart Application", self.safety):
@@ -172,10 +229,22 @@ class AutostartTab(QWidget):
         val = self.combo_cd.currentText()
         ok, msg = self.autostart_tuner.configure_coredump_limit(val)
         QMessageBox.information(self, "Core Dump Limit Applied", msg)
+        self._refresh()
+
+    def _reset_coredump(self):
+        if not self.safety.is_root:
+            if not prompt_root_required(self, "Restore Default systemd-coredump Ceiling", self.safety):
+                return
+        ok, msg = self.autostart_tuner.restore_default_coredump()
+        QMessageBox.information(self, "Core Dump Limit Restored", msg)
+        self._refresh()
 
     def _toggle_abrt(self):
         if not self.safety.is_root:
             if not prompt_root_required(self, "Manage ABRT Bug Reporting Daemons", self.safety):
                 return
-        ok, msg = self.autostart_tuner.toggle_abrt_services(False)
+        is_active = self.autostart_tuner.is_abrt_active()
+        target_enable = not is_active
+        ok, msg = self.autostart_tuner.toggle_abrt_services(target_enable)
         QMessageBox.information(self, "ABRT Daemons Updated", msg)
+        self._refresh()

@@ -125,6 +125,26 @@ class TestDefaultsAndUndo(unittest.TestCase):
                 self.assertTrue(ok)
                 self.assertIn("restored to default", msg)
 
+    def test_autostart_coredump_and_abrt(self):
+        from conftune.core.autostart_tuner import AutostartTuner
+        tuner = AutostartTuner(safety=self.safety, backup_mgr=self.backup_mgr)
+        dummy_cd = os.path.join(self.temp_dir, "99-conftune.conf")
+        with open(dummy_cd, "w") as f:
+            f.write("[Coredump]\nStorage=external\nMaxUse=200M\n")
+
+        with patch("conftune.core.autostart_tuner.COREDUMP_CONF_PATH", dummy_cd):
+            self.assertTrue(tuner.is_coredump_configured())
+            self.assertEqual(tuner.get_current_coredump_limit(), "200M")
+            ok, msg = tuner.restore_default_coredump()
+            self.assertTrue(ok)
+            self.assertIn("restore", msg.lower())
+
+        # Test ABRT active status
+        with patch.object(tuner, "get_abrt_status", return_value={"abrt-journal-core.service": True, "abrt-oops.service": False}):
+            self.assertTrue(tuner.is_abrt_active())
+        with patch.object(tuner, "get_abrt_status", return_value={"abrt-journal-core.service": False, "abrt-oops.service": False}):
+            self.assertFalse(tuner.is_abrt_active())
+
 
 if __name__ == "__main__":
     unittest.main()
