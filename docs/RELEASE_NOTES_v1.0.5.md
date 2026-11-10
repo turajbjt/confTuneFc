@@ -33,7 +33,9 @@
 - **Dynamic Action Button**: Button text toggles dynamically between *"Enable RPM Fusion Repositories"* and *"Disable RPM Fusion Repositories"*.
 - **GNOME Titlebar Button Ordering**: Corrected GNOME Desktop Productivity layout from `[max][min][close]` to `[min][max][close]` (`appmenu:minimize,maximize,close`), aligning with upstream GNOME Tweaks standards.
 
-### 5. Layout & Whitespace Optimization
+### 5. Table Layout & Cell Button Alignment
+- **Centered Action & Reset Buttons**: Fixed vertical and horizontal misalignment for buttons embedded in table cells across the **Kernel Sysctl** table, **Boot & Systemd Services** recommendations table, and **Autostart Applications** table.
+- **Dedicated Cell Container Layout**: Embedded buttons within a centered `QHBoxLayout` container and assigned fixed column widths to eliminate text elision, clipping, or table grid border overflow.
 - **Compact Profile Cards**: Reduced excessive vertical white space in the *Tuning Profiles & Workload Presets* card.
 - **Expanded Lower Detail View**: Extended the lower configuration detail containers to substantially minimize vertical scrolling when inspecting profile settings.
 
@@ -48,8 +50,8 @@
 
 | File | SHA256 Checksum |
 | :--- | :--- |
-| `conftune-fc-1.0.5-1.noarch.rpm` | `bf533074aee1afa06c5e951896037394f5fb898ff07b720f02be44bdc008d113` |
-| `conftune-fc-1.0.5-1.src.rpm` | `fcffc71af0895f17c85fb1e60d200ea6ec8f0def46db4bddc63207432bd17fe4` |
+| `conftune-fc-1.0.5-1.noarch.rpm` | `c513c2126c68cfad4e49894f134b5fd669b623df78106de3d744a0dade87238a` |
+| `conftune-fc-1.0.5-1.src.rpm` | `1f8a950145b519c4b657c8760180e161c1a986e2b1341faaade1da69e45535dd` |
 
 ---
 

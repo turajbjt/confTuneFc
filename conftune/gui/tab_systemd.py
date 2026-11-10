@@ -3,6 +3,7 @@ Systemd Boot and Daemon Optimizer Tab for ConfTune FC.
 Analyzes boot bottlenecks with systemd-analyze blame and manages service states.
 """
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -171,8 +172,8 @@ class SystemdTab(QWidget):
             action_text = "Disable" if r["active"] else "Enable"
             btn_label = action_text if self.safety.is_root else f"🔒 {action_text} (Root)"
             btn_toggle = QPushButton(btn_label)
-            btn_toggle.setFixedHeight(32)
-            btn_toggle.setMinimumWidth(160)
+            btn_toggle.setFixedHeight(30)
+            btn_toggle.setFixedWidth(160)
             btn_toggle.setEnabled(self.safety.is_root)
             if not self.safety.is_root:
                 btn_toggle.setToolTip("Root privileges required to enable/disable system services")
@@ -182,10 +183,21 @@ class SystemdTab(QWidget):
                 btn_toggle.style().polish(btn_toggle)
             btn_toggle.clicked.connect(lambda ch, s=r["service"], act=r["active"]: self._toggle_service(s, not act))
 
+            # Action button container (centered and aligned in column 3)
+            cell_container = QWidget()
+            cell_layout = QHBoxLayout(cell_container)
+            cell_layout.setContentsMargins(8, 4, 8, 4)
+            cell_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            cell_layout.addWidget(btn_toggle)
+
+            it_action = QTableWidgetItem()
+            it_action.setFlags(it_action.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
             self.table_rec.setItem(row, 0, it_name)
             self.table_rec.setItem(row, 1, it_state)
             self.table_rec.setItem(row, 2, it_desc)
-            self.table_rec.setCellWidget(row, 3, btn_toggle)
+            self.table_rec.setItem(row, 3, it_action)
+            self.table_rec.setCellWidget(row, 3, cell_container)
 
     def _toggle_service(self, service: str, enable: bool):
         if not self.safety.is_root:

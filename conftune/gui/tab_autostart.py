@@ -3,6 +3,7 @@ Autostart Applications & Crash Dump Limiter Tab for ConfTune FC.
 Inspired by Stacer. Manages autostart launchers, core dump storage, and ABRT services.
 """
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -132,14 +133,29 @@ class AutostartTab(QWidget):
                 btn_txt = f"🔒 {btn_txt} (Root)"
 
             btn_tog = QPushButton(btn_txt)
-            btn_tog.setFixedHeight(32)
-            btn_tog.setMinimumWidth(160)
+            btn_tog.setFixedHeight(30)
+            btn_tog.setFixedWidth(160)
             if e["enabled"]:
                 btn_tog.setProperty("class", "destructive")
                 btn_tog.style().unpolish(btn_tog)
                 btn_tog.style().polish(btn_tog)
             btn_tog.clicked.connect(lambda ch, p=e["path"], en=e["enabled"]: self._toggle_entry(p, not en))
-            self.table_auto.setCellWidget(row, 3, btn_tog)
+
+            # Action button container (centered and aligned in column 3)
+            cell_container = QWidget()
+            cell_layout = QHBoxLayout(cell_container)
+            cell_layout.setContentsMargins(8, 4, 8, 4)
+            cell_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            cell_layout.addWidget(btn_tog)
+
+            it_action = QTableWidgetItem()
+            it_action.setFlags(it_action.flags() & ~Qt.ItemFlag.ItemIsEditable)
+
+            self.table_auto.setItem(row, 0, QTableWidgetItem(e["name"]))
+            self.table_auto.setItem(row, 1, QTableWidgetItem(e["scope"].capitalize()))
+            self.table_auto.setItem(row, 2, QTableWidgetItem(e["exec"]))
+            self.table_auto.setItem(row, 3, it_action)
+            self.table_auto.setCellWidget(row, 3, cell_container)
 
     def _toggle_entry(self, path: str, enable: bool):
         if path.startswith("/etc/") and not self.safety.is_root:
