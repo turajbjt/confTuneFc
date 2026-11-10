@@ -2,7 +2,7 @@
 ### Fedora, Rocky Linux & CentOS System Setup, Configuration & Performance Tuner
 
 [![Linux](https://img.shields.io/badge/Platform-Fedora%20%7C%20Rocky%20%7C%20CentOS%20%7C%20RHEL-blue?logo=fedora)](https://getfedora.org)
-[![Version](https://img.shields.io/badge/Version-1.0.7-blue)](packaging/)
+[![Version](https://img.shields.io/badge/Version-1.0.8-blue)](packaging/)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://python.org)
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20Adwaita-3584e4?logo=qt)](https://pypi.org/project/PyQt6/)
 [![RPM Package](https://img.shields.io/badge/RPM-Universal%20noarch-red?logo=redhat)](packaging/)
@@ -22,7 +22,7 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 - [💻 Command-Line Interface (CLI) Reference](docs/CLI_REFERENCE.md)
 - [🏗️ Architecture & Design Specification](docs/ARCHITECTURE.md)
 - [🛡️ Safety Engine & Rollback Principles](docs/SAFETY.md)
-- [📝 Release Notes (v1.0.7)](docs/RELEASE_NOTES_v1.0.7.md)
+- [📝 Release Notes (v1.0.8)](docs/RELEASE_NOTES_v1.0.8.md)
 - [🤝 Contributing Guidelines](CONTRIBUTING.md)
 
 ---
@@ -98,20 +98,20 @@ ConfTune FC bridges the gap between desktop workstations and headless server nod
 You can directly install the pre-built unified `.rpm` package included in the repository using `dnf` or `rpm` (compatible across Fedora 40+, CentOS Stream, Rocky Linux, and RHEL):
 ```bash
 # Install binary RPM locally with automatic dependency resolution:
-sudo dnf install ./conftune-fc-1.0.7-1.noarch.rpm
+sudo dnf install ./conftune-fc-1.0.8-1.noarch.rpm
 
 # Or with rpm:
-sudo rpm -ivh ./conftune-fc-1.0.7-1.noarch.rpm
+sudo rpm -ivh ./conftune-fc-1.0.8-1.noarch.rpm
 ```
 
 #### Rebuilding or Inspecting from Source RPM (SRPM):
-The repository also includes the official source RPM (`conftune-fc-1.0.7-1.src.rpm`), enabling full auditability, reproducible rebuilds, and mock/chroot building:
+The repository also includes the official source RPM (`conftune-fc-1.0.8-1.src.rpm`), enabling full auditability, reproducible rebuilds, and mock/chroot building:
 ```bash
 # Rebuild binary RPM directly from the source RPM:
-rpmbuild --rebuild ./conftune-fc-1.0.7-1.src.rpm
+rpmbuild --rebuild ./conftune-fc-1.0.8-1.src.rpm
 
 # Or inspect the spec file and source archive:
-rpm -ivh ./conftune-fc-1.0.7-1.src.rpm
+rpm -ivh ./conftune-fc-1.0.8-1.src.rpm
 ```
 
 Verify package integrity using the included checksums:
@@ -289,7 +289,7 @@ sudo dnf install rpm-build
 ./packaging/build-rpm.sh
 
 # Install generated RPM
-sudo dnf install ./conftune-fc-1.0.7-1.noarch.rpm
+sudo dnf install ./conftune-fc-1.0.8-1.noarch.rpm
 ```
 
 ---

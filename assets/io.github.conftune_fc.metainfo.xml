@@ -51,6 +51,15 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.8" date="2026-11-09">
+      <description>
+        <p>Security hardening and metadata privacy maintenance release:</p>
+        <ul>
+          <li>Anonymized RPM spec file changelog records and removed personal email addresses</li>
+          <li>Hardened repository .gitignore with comprehensive secret, private key, and credential exclusion patterns</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.7" date="2026-11-09">
       <description>
         <p>Autostart Manager live status indicators and coredump rollback release:</p>

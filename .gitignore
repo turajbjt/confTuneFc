@@ -25,3 +25,18 @@ packaging/rpmbuild-runner
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Security & Secret exclusions
+.env
+.env.*
+*.key
+*.pem
+*.cert
+*.crt
+*.pfx
+*.p12
+*id_rsa*
+*id_ed25519*
+*id_ecdsa*
+*.credentials
+*.secret

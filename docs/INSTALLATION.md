@@ -30,21 +30,21 @@ You can install the pre-built unified `.rpm` package directly from this reposito
 
 ```bash
 # Using DNF with automatic dependency resolution:
-sudo dnf install ./conftune-fc-1.0.7-1.noarch.rpm
+sudo dnf install ./conftune-fc-1.0.8-1.noarch.rpm
 
 # Or directly with RPM:
-sudo rpm -ivh ./conftune-fc-1.0.7-1.noarch.rpm
+sudo rpm -ivh ./conftune-fc-1.0.8-1.noarch.rpm
 ```
 
 #### Rebuilding or Inspecting from Source RPM (SRPM):
-The repository also provides the official source RPM (`conftune-fc-1.0.7-1.src.rpm`), allowing you to inspect the spec file, audit source tarballs, or rebuild binary packages in isolated mock/chroot environments:
+The repository also provides the official source RPM (`conftune-fc-1.0.8-1.src.rpm`), allowing you to inspect the spec file, audit source tarballs, or rebuild binary packages in isolated mock/chroot environments:
 
 ```bash
 # Rebuild binary RPM from source package:
-rpmbuild --rebuild ./conftune-fc-1.0.7-1.src.rpm
+rpmbuild --rebuild ./conftune-fc-1.0.8-1.src.rpm
 
 # Or inspect the spec file and source archive:
-rpm -ivh ./conftune-fc-1.0.7-1.src.rpm
+rpm -ivh ./conftune-fc-1.0.8-1.src.rpm
 ```
 
 Verify package integrity using the included SHA256 checksums:
@@ -61,7 +61,7 @@ conftune
 
 To upgrade an existing RPM package installation in the future:
 ```bash
-sudo dnf upgrade ./conftune-fc-1.0.7-1.noarch.rpm
+sudo dnf upgrade ./conftune-fc-1.0.8-1.noarch.rpm
 ```
 
 ---

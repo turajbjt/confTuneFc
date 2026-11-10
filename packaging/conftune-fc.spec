@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.7
+Version:        1.0.8
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,19 +143,23 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
-* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.7-1
+* Mon Nov 09 2026 BuildDesignCreate.com - 1.0.8-1
+- Anonymize spec file changelog metadata and remove personal email address
+- Harden repository .gitignore with secret, private key, and credential exclusions
+
+* Mon Nov 09 2026 BuildDesignCreate.com - 1.0.7-1
 - Add live status badge and dynamic toggle button for ABRT bug reporting daemons in Autostart Manager
 - Add Default (Undo) rollback button and live storage ceiling status for systemd-coredump
 - Synchronize coredump storage limit combo box on tab load with active drop-in configuration
 - Gray out coredump ceiling controls and ABRT daemon management when running as non-root
 - Add comprehensive unit tests for coredump default/undo, ABRT active status, and non-root gray-out
 
-* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.6-1
+* Mon Nov 09 2026 BuildDesignCreate.com - 1.0.6-1
 - Center and align table cell buttons in Kernel & Sysctl, Boot & Systemd, and Autostart tables
 - Wrap table cell action buttons inside centered QHBoxLayout containers with fixed column geometry
 - Fix CSS button width constraint in QTableWidget to prevent 150px overflow on compact reset buttons
 
-* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.5-1
+* Mon Nov 09 2026 BuildDesignCreate.com - 1.0.5-1
 - Gray out all root-only controls and action buttons when running as an unprivileged user
 - Add granular Default / Undo rollback actions across all tuning modules and GUI tabs
 - Add active state badges (green/gray/red) for custom overrides vs stock defaults
@@ -163,21 +167,21 @@ fi
 - Fix live DNF parallel downloads detection and checkbox loading state across DNF4/DNF5
 - Optimize layout spacing in Tuning Profiles tab to eliminate whitespace and maximize visible area
 
-* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.4-1
+* Thu Nov 05 2026 BuildDesignCreate.com - 1.0.4-1
 - Add beta status disclaimers and caution banners matching confclean-fc
 - Add GUI header beta indicator pill and overview dashboard safety notice
 - Include [BETA] tag in CLI system performance status banner
 
-* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.3-1
+* Thu Nov 05 2026 BuildDesignCreate.com - 1.0.3-1
 - Fix label and text background blending so text widgets render with transparent backgrounds over cards, header bar, and dialogs
 
-* Thu Nov 05 2026 James Turansky <turajb@gmail.com> - 1.0.2-1
+* Thu Nov 05 2026 BuildDesignCreate.com - 1.0.2-1
 - Fix PolicyKit privilege escalation with proven confclean-fc asynchronous handshake
 - Fix Wayland/XWayland display authorization with xhost localroot and QT_QPA_PLATFORM=xcb
 - Fix microscopic action button sizing and text truncation in Boot & Systemd tab
 - Add AppStream releases metadata and update versioning pipeline
 
-* Wed Nov 04 2026 James Turansky <turajb@gmail.com> - 1.0.0-1
+* Wed Nov 04 2026 BuildDesignCreate.com - 1.0.0-1
 - Initial universal release of ConfTune FC for Fedora, Rocky Linux, AlmaLinux, CentOS Stream, and RHEL
 - Pure Python source package with noarch architecture and on-target bytecode compilation
 - Full standard hicolor raster icons hierarchy (16x16 to 512x512) and scalable SVG
