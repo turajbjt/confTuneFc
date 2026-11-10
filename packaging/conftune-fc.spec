@@ -1,5 +1,5 @@
 Name:           conftune-fc
-Version:        1.0.5
+Version:        1.0.6
 Release:        1
 Summary:        Fedora, Rocky Linux & CentOS system setup, configuration & performance tuner
 
@@ -143,6 +143,11 @@ fi
 %{_prefix}/lib/systemd/system/conftune-powerd.service
 
 %changelog
+* Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.6-1
+- Center and align table cell buttons in Kernel & Sysctl, Boot & Systemd, and Autostart tables
+- Wrap table cell action buttons inside centered QHBoxLayout containers with fixed column geometry
+- Fix CSS button width constraint in QTableWidget to prevent 150px overflow on compact reset buttons
+
 * Mon Nov 09 2026 James Turansky <turajb@gmail.com> - 1.0.5-1
 - Gray out all root-only controls and action buttons when running as an unprivileged user
 - Add granular Default / Undo rollback actions across all tuning modules and GUI tabs

@@ -51,6 +51,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="1.0.6" date="2026-11-09">
+      <description>
+        <p>Table cell layout, button alignment, and visual polish release:</p>
+        <ul>
+          <li>Centered and aligned action and reset buttons across the Kernel Sysctl, Boot &amp; Systemd, and Autostart tables</li>
+          <li>Embedded table cell buttons inside centered QHBoxLayout containers with fixed column geometry</li>
+          <li>Fixed CSS min-width constraints in QTableWidget preventing button overflow</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.0.5" date="2026-11-09">
       <description>
         <p>User-mode safety, granular default/undo rollback, and desktop refinement release:</p>
