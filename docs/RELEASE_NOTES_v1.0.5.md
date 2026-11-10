@@ -48,8 +48,8 @@
 
 | File | SHA256 Checksum |
 | :--- | :--- |
-| `conftune-fc-1.0.5-1.noarch.rpm` | `e93ec9e32d7b157b64ae82baf9855da33cb7286587c6ece8ec28146e79dd634e` |
-| `conftune-fc-1.0.5-1.src.rpm` | `85dbd515effa1decc7a733b613a36b00cae335423ffc821b28ca545389ba1614` |
+| `conftune-fc-1.0.5-1.noarch.rpm` | `bf533074aee1afa06c5e951896037394f5fb898ff07b720f02be44bdc008d113` |
+| `conftune-fc-1.0.5-1.src.rpm` | `fcffc71af0895f17c85fb1e60d200ea6ec8f0def46db4bddc63207432bd17fe4` |
 
 ---
 

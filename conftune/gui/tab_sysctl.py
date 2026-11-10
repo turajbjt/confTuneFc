@@ -95,7 +95,10 @@ class SysctlTab(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
+        self.table.setColumnWidth(5, 110)
+        self.table.verticalHeader().setDefaultSectionSize(38)
+        self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
 
         layout.addWidget(self.table)
@@ -142,19 +145,32 @@ class SysctlTab(QWidget):
             it_desc = QTableWidgetItem(item["description"])
             it_desc.setFlags(it_desc.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
-            # Reset Button for this specific row
+            # Reset Button container for this specific row (centered and aligned in column 5)
+            cell_container = QWidget()
+            cell_layout = QHBoxLayout(cell_container)
+            cell_layout.setContentsMargins(6, 4, 6, 4)
+            cell_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
             btn_row_reset = QPushButton("↺ Default")
+            btn_row_reset.setObjectName("btn_row_reset")
+            btn_row_reset.setProperty("class", "table_btn_reset")
             btn_row_reset.setToolTip(f"Reset {item['key']} value to recommended default: {item['default']}" if self.safety.is_root else "Root privileges required to modify kernel parameters")
             btn_row_reset.setEnabled(self.safety.is_root)
-            btn_row_reset.setFixedHeight(24)
+            btn_row_reset.setFixedHeight(26)
+            btn_row_reset.setFixedWidth(85)
             btn_row_reset.clicked.connect(lambda ch, r=row, d=item["default"]: self._reset_row(r, d))
+            cell_layout.addWidget(btn_row_reset)
+
+            it_reset = QTableWidgetItem()
+            it_reset.setFlags(it_reset.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
             self.table.setItem(row, 0, it_key)
             self.table.setItem(row, 1, it_cur)
             self.table.setItem(row, 2, it_rec)
             self.table.setItem(row, 3, it_imp)
             self.table.setItem(row, 4, it_desc)
-            self.table.setCellWidget(row, 5, btn_row_reset)
+            self.table.setItem(row, 5, it_reset)
+            self.table.setCellWidget(row, 5, cell_container)
 
     def _reset_row(self, row: int, default_val: str):
         item = self.table.item(row, 1)

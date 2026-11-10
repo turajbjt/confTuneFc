@@ -208,8 +208,17 @@ QTableWidget QPushButton {
     padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
-    min-height: 28px;
+    min-height: 26px;
     min-width: 150px;
+}
+
+QTableWidget QPushButton#btn_row_reset,
+QTableWidget QPushButton.table_btn_reset,
+QTableWidget QPushButton[class="table_btn_reset"] {
+    min-width: 75px;
+    max-width: 95px;
+    padding: 3px 8px;
+    font-size: 11px;
 }
 
 QTableWidget QPushButton:hover {
